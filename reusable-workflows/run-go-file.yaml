@@ -1,0 +1,32 @@
+name: Run Go File
+
+on:
+  workflow_call:
+    inputs:
+      go-file-repo:
+        default: 'MaxFogwall/common'
+        description: 'The repository with the Go file. By default "MaxFogwall/common".'
+      go-version:
+        default: 'stable'
+        description: 'The version of Go to use (e.g. "1.22.5"). By default "stable".'
+      go-file-path:
+        required: true
+        description: 'The file path to the Go file (e.g. "code/code-1.go").'
+
+jobs:
+  run-go-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout `${{ inputs.go-file-repo }}`
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.go-file-repo }}
+          path: 'repository'
+
+      - name: Setup Go v${{ inputs.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          GO_VERSION: ${{ inputs.go-version }}
+
+      - name: Run `${{ inputs.go-file-path }}`
+        run: go run repository/${{ inputs.go-file-path }}

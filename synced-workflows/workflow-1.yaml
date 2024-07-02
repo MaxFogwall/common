@@ -1,0 +1,12 @@
+# This file is synced from `MaxFogwall/common`.
+
+name: Run `code-1.go`
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-code-1:
+    uses: 'MaxFogwall/common/reusable-workflows/run-go-file.yaml@main'
+    with:
+      go-file-path: 'code/code-1.go'
