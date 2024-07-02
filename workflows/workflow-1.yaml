@@ -1,0 +1,27 @@
+name: Run `code-1.go`
+
+on:
+  workflow_dispatch:
+
+env:
+  common-repo: 'MaxFogwall/common'
+  go-version: '1.22.5'
+  code-file: 'code-1.go'
+
+jobs:
+  run-go-function:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout `${{ env.common-repo }}`
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.common-repo }}
+          path: 'common'
+
+      - name: Setup Go v${{ env.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.go-version }}
+
+      - name: Run `code/${{ env.code-file }}`
+        run: go run common/code/${{ env.code-file }}
