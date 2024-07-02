@@ -1,3 +1,5 @@
+# This file is synced from `MaxFogwall/common`.
+
 name: Run `code-1.go`
 
 on:
