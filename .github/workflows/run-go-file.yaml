@@ -4,12 +4,15 @@ on:
   workflow_call:
     inputs:
       go-file-repo:
+        type: 'string'
         default: 'MaxFogwall/common'
         description: 'The repository with the Go file. By default "MaxFogwall/common".'
       go-version:
+        type: 'string'
         default: 'stable'
         description: 'The version of Go to use (e.g. "1.22.5"). By default "stable".'
       go-file-path:
+        type: 'string'
         required: true
         description: 'The file path to the Go file (e.g. "code/code-1.go").'
 
