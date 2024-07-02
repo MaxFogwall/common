@@ -20,7 +20,7 @@ jobs:
   run-go-file:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository ("${{ inputs.go-file-repo }}")
+      - name: Checkout Repository ("${{ inputs.go-file-repo }}")
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.go-file-repo }}
