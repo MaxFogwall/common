@@ -7,6 +7,6 @@ on:
 
 jobs:
   run-code-1:
-    uses: 'MaxFogwall/common/reusable-workflows/run-go-file.yaml@main'
+    uses: 'MaxFogwall/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/code-1.go'
