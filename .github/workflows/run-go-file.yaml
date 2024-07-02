@@ -20,16 +20,16 @@ jobs:
   run-go-file:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout `${{ inputs.go-file-repo }}`
+      - name: Checkout repository ("${{ inputs.go-file-repo }}")
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.go-file-repo }}
           path: 'repository'
 
-      - name: Setup Go v${{ inputs.go-version }}
+      - name: Setup Go ("${{ inputs.go-version }}")
         uses: actions/setup-go@v5
         with:
           GO_VERSION: ${{ inputs.go-version }}
 
-      - name: Run `${{ inputs.go-file-path }}`
+      - name: Run Go File ("${{ inputs.go-file-path }}")
         run: go run repository/${{ inputs.go-file-path }}
