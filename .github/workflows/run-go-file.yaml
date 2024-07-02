@@ -29,7 +29,7 @@ jobs:
       - name: Setup Go ("${{ inputs.go-version }}")
         uses: actions/setup-go@v5
         with:
-          GO_VERSION: ${{ inputs.go-version }}
+          go-version: ${{ inputs.go-version }}
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
         run: go run repository/${{ inputs.go-file-path }}
