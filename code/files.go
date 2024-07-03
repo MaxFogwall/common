@@ -31,6 +31,6 @@ func ReadFile(filePath string) string {
 	return string(data)
 }
 
-func MakeSummary(contents string) {
-	WriteFile("summary.md", contents)
+func MakeSummary(contents string) bool {
+	return WriteFile("summary.md", contents)
 }
