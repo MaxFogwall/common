@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	files "github.com/MaxFogwall/common/code"
+	files "github.com/MaxFogwall/common"
 )
 
 func main() {
