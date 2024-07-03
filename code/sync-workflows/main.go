@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,6 +24,10 @@ func main() {
 	syncedRepositoriesTable += "|-:|:-:|:-|\n"
 
 	for _, syncedRepository := range syncedRepositories {
+		repositoryOwnerNameSlice := strings.Split(syncedRepository.Identifier, "/")
+		if len(repositoryOwnerNameSlice) < 2 {
+			panic(errors.New("one of the repositories was not in the correct format (i.e. \"owner/name\")"))
+		}
 		repositoryName := strings.Split(syncedRepository.Identifier, "/")[1]
 		repositoryString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", repositoryName, syncedRepository.Identifier)
 
