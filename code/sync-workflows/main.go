@@ -31,7 +31,7 @@ func main() {
 			successString = "✅"
 		}
 
-		timeString := fmt.Sprintf("%s", syncedRepository.ElapsedTime)
+		timeString := syncedRepository.ElapsedTime.String()
 
 		syncedRepositoriesTable += fmt.Sprintf("| %s | %s | %s |\n", repositoryString, successString, timeString)
 	}
