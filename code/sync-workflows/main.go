@@ -41,7 +41,7 @@ func main() {
 		syncedRepositoriesTable += fmt.Sprintf("| %s | %s | %s |\r\n", repositoryString, successString, timeString)
 	}
 
-	files.MakeSummary("### Synchronization Complete\n" + syncedRepositoriesTable)
+	files.MakeSummary("### Synchronization Complete\r\n" + syncedRepositoriesTable)
 }
 
 type SyncedRepository struct {
