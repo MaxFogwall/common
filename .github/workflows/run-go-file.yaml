@@ -40,7 +40,7 @@ jobs:
         run: |
           cd repository
           if test -f summary.md; then
-            echo "Job summary file found! Sending to `$GITHUB_STEP_SUMMARY`..."
+            echo "Job summary file found! Sending to `GITHUB_STEP_SUMMARY`."
             echo $(cat summary.md) >> $GITHUB_STEP_SUMMARY
           else
             echo "No job summary file found."
