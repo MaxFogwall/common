@@ -2,7 +2,7 @@ package main
 
 import (
     "fmt"
-	"files"
+	"github.com/MaxFogwall/common/files"
 	"time"
 )
 
