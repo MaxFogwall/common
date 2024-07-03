@@ -20,8 +20,8 @@ func main() {
 	}
 
 	syncedRepositories := syncWorkflows(repositories)
-	syncedRepositoriesTable := "| Repository | Success | T-Start |\n"
-	syncedRepositoriesTable += "|-:|:-:|:-|\n"
+	syncedRepositoriesTable := "| Repository | Success | T-Start |\r\n"
+	syncedRepositoriesTable += "|-:|:-:|:-|\r\n"
 
 	for _, syncedRepository := range syncedRepositories {
 		repositoryOwnerNameSlice := strings.Split(syncedRepository.Identifier, "/")
@@ -38,7 +38,7 @@ func main() {
 
 		timeString := syncedRepository.ElapsedTime.String()
 
-		syncedRepositoriesTable += fmt.Sprintf("| %s | %s | %s |\n", repositoryString, successString, timeString)
+		syncedRepositoriesTable += fmt.Sprintf("| %s | %s | %s |\r\n", repositoryString, successString, timeString)
 	}
 
 	files.MakeSummary("### Synchronization Complete\n" + syncedRepositoriesTable)
