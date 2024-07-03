@@ -32,7 +32,9 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
-        run: go run repository/${{ inputs.go-file-path }}
+        run: |
+          cd repository  # Necessary so that the go.mod file can be found.
+          go run ${{ inputs.go-file-path }}
       
       - name: Check For Job Summary
         run: |
