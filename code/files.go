@@ -1,32 +1,36 @@
 package files
 
+import (
+	"os"
+)
+
 func check(e error) {
-    if e != nil {
-        panic(e)
-    }
+	if e != nil {
+		panic(e)
+	}
 }
 
-func writeFile(filePath string, contents string) bool {
+func WriteFile(filePath string, contents string) bool {
 	f, err := os.Create(filePath)
-    check(err)
+	check(err)
 
 	defer f.Close()
 
 	bytesWritten, err := f.WriteString(contents)
-    check(err)
+	check(err)
 
 	f.Sync()
 
 	return bytesWritten > 0
 }
 
-func readFile(filePath string) string {
+func ReadFile(filePath string) string {
 	data, err := os.ReadFile(filePath)
-    check(err)
+	check(err)
 
-    return string(data)
+	return string(data)
 }
 
-func makeSummary(contents string) {
-	writeFile("summary.md", contents)
+func MakeSummary(contents string) {
+	WriteFile("summary.md", contents)
 }
