@@ -33,3 +33,10 @@ jobs:
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
         run: go run repository/${{ inputs.go-file-path }}
+      
+      - name: Check For Job Summary
+        run: |
+          if test -f summary.md; then
+            echo "Job summary found."
+            echo $(cat summary.md) >> $GITHUB_STEP_SUMMARY
+          fi
