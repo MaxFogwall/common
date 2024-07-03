@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	data := []byte(files.ReadFile("repositories-to-sync.json"))
+	data := []byte(files.ReadFile("repos.json"))
 
 	var repositories []string
 	err := json.Unmarshal(data, &repositories)
