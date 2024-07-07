@@ -3,7 +3,6 @@ package common
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -14,8 +13,8 @@ func check(e error) {
 	}
 }
 
-func FileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
 	return err == nil || !os.IsNotExist(err)
 }
 
@@ -44,10 +43,20 @@ func MakeSummary(contents string) bool {
 	return WriteFile("summary.md", contents)
 }
 
-func DeleteDirectory(dir string) {
-	if err := os.RemoveAll(dir); err != nil {
-		log.Fatalf("could not delete directory '%s': %v", dir, err)
+func CreateDirectory(dir string) error {
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return fmt.Errorf("could not create directory '%s': %w", dir, err)
 	}
+
+	return nil
+}
+
+func DeleteDirectory(dir string) error {
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("could not delete directory '%s': %w", dir, err)
+	}
+
+	return nil
 }
 
 func DeleteSpecificFiles(dir string, shouldDelete func(os.FileInfo) bool) error {

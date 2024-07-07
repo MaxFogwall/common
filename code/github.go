@@ -26,7 +26,7 @@ func RepoOwnerName(repo string) (string, string) {
 }
 
 func CloneRepository(repo string, dir string) error {
-	if FileExists(dir) {
+	if PathExists(dir) {
 		DeleteDirectory(dir)
 	}
 
@@ -98,10 +98,19 @@ func locallySync(targetRepo string, sourceRepoDir string) error {
 		return syncedFilePattern.MatchString(info.Name())
 	}
 
-	if err := DeleteSpecificFiles(targetRepoDir+"/.github/workflows", isSyncedFile); err != nil {
+	targetWorkflowPath := targetRepoDir + "/.github/workflows"
+	sourceWorkflowPath := sourceRepoDir + "/.github/workflows"
+
+	if !PathExists(targetWorkflowPath) {
+		if err := CreateDirectory(targetWorkflowPath); err != nil {
+			return fmt.Errorf("could not create workflow path for target repo '%s': %w", targetRepo, err)
+		}
+	}
+
+	if err := DeleteSpecificFiles(targetWorkflowPath, isSyncedFile); err != nil {
 		return fmt.Errorf("could not delete synced workflow files from target repo '%s': %w", targetRepo, err)
 	}
-	if err := CopySpecificFiles(sourceRepoDir+"/.github/workflows", targetRepoDir+"/.github/workflows", isSyncedFile); err != nil {
+	if err := CopySpecificFiles(sourceWorkflowPath, targetWorkflowPath, isSyncedFile); err != nil {
 		return fmt.Errorf("could not copy synced workflow files to target repo '%s': %w", targetRepo, err)
 	}
 
