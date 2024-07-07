@@ -40,7 +40,7 @@ func main() {
 			anyRepoHadErrors = true
 		}
 
-		timeString := syncedRepo.ElapsedTime.String()
+		timeString := syncedRepo.ElapsedTime.Round(time.Second).String()
 
 		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |", repoString, successString, timeString))
 	}
