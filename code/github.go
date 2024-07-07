@@ -21,6 +21,14 @@ func runCommand(name string, args ...string) error {
 	return command.Run()
 }
 
+func runAndOutputCommand(name string, args ...string) ([]byte, error) {
+	command := exec.Command(name, args...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	log.Printf("> %s %s", name, strings.Join(args, " "))
+	return command.Output()
+}
+
 func RepoOwnerName(repo string) (string, string) {
 	ownerNameSlice := strings.Split(repo, "/")
 	if len(ownerNameSlice) < 2 {
@@ -63,45 +71,88 @@ func getDefaultBranch(ctx context.Context, client *gogithub.Client, owner string
 	return repoInfo.GetDefaultBranch(), nil
 }
 
-func BranchExists(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) (bool, error) {
+func ExecInDir(dir string, exec func() error) error {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("could not get working directory: %v", err)
+	}
+
+	if err := runCommand("cd", workingDir+"/"+dir); err != nil {
+		return fmt.Errorf("could not change directory to '%s': %v", dir, err)
+	}
+
+	if execErr := exec(); execErr != nil {
+		if err := runCommand("cd", workingDir); err != nil {
+			return fmt.Errorf("could not change directory back to '%s': %v", dir, err)
+		}
+		return execErr
+	}
+
+	return nil
+}
+
+func RemoteBranchExists(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) (bool, error) {
 	branchInfo, response, err := client.Repositories.GetBranch(ctx, owner, name, branch, 1)
 	if response.StatusCode == 404 {
 		return false, nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("could not get branch info from '%s/%s@%s': %v", owner, name, branch, err)
+		return false, fmt.Errorf("could not get remote branch info from '%s/%s@%s': %v", owner, name, branch, err)
 	}
 	return branchInfo != nil, nil
 }
 
-func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
-	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+func LocalBranchExists(branch string) (bool, error) {
+	_, err := runAndOutputCommand("git", "rev-parse", "--verify", branch)
 	if err != nil {
-		return fmt.Errorf("could not get default branch in '%s/%s': %v", owner, name, err)
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.Success(), nil
+		}
+		return false, fmt.Errorf("could not verify whether branch '%s' exists locally: %v", branch, err)
 	}
 
-	if err := runCommand("git", "checkout", defaultBranch); err != nil {
-		return fmt.Errorf("could not checkout default branch '%s/%s@%s': %v", owner, name, defaultBranch, err)
-	}
+	return true, nil
+}
 
+func DeleteLocalBranch(branch string) error {
 	if err := runCommand("git", "branch", "-D", branch); err != nil {
-		return fmt.Errorf("could not delete branch locally '%s/%s@%s': %v", owner, name, branch, err)
+		return fmt.Errorf("could not delete local branch '%s': %v", branch, err)
 	}
 
+	return nil
+}
+
+func DeleteRemoteBranch(branch string) error {
 	if err := runCommand("git", "push", "origin", "--delete", branch); err != nil {
-		return fmt.Errorf("could not delete branch remotely '%s/%s@%s': %v", owner, name, branch, err)
+		return fmt.Errorf("could not delete remote branch '%s': %v", branch, err)
+	}
+
+	return nil
+}
+
+func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
+	if exists, err := LocalBranchExists(branch); err != nil {
+		return err
+	} else if exists {
+		if err := DeleteLocalBranch(branch); err != nil {
+			return err
+		}
+	}
+
+	if exists, err := RemoteBranchExists(ctx, client, owner, name, branch); err != nil {
+		return err
+	} else if exists {
+		if err := DeleteRemoteBranch(branch); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
-	if exists, err := BranchExists(ctx, client, owner, name, branch); err == nil && exists {
-		if err := DeleteBranch(ctx, client, owner, name, branch); err != nil {
-			return fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("could not see if old '%s' branch exists: %w", branch, err)
+	if err := DeleteBranch(ctx, client, owner, name, branch); err != nil {
+		return fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
 	}
 
 	if err := runCommand("git", "checkout", "-b", branch); err != nil {
@@ -158,14 +209,24 @@ func SyncRepository(targetRepo string, sourceRepoDir string) error {
 	owner, name := RepoOwnerName(targetRepo)
 	ctx := context.Background()
 	client := getClient()
+
+	featureBranch := "sync-workflows"
 	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+
 	if err != nil {
 		return err
 	}
-	featureBranch := "sync-workflows"
 
-	if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
-		return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
+	err = ExecInDir(targetRepo, func() error {
+		if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
+			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
 	}
 
 	_, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
