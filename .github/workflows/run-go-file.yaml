@@ -16,6 +16,10 @@ on:
         required: true
         description: 'The file path to the Go file (e.g. "code/code-1.go").'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   run-go-file:
     runs-on: ubuntu-latest

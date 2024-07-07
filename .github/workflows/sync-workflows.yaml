@@ -9,9 +9,6 @@ on:
 
 jobs:
   run-sync-workflows:
-    permissions:
-      contents: write
-      pull-requests: write
     uses: 'MaxFogwall/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/sync-workflows/main.go'
