@@ -70,7 +70,7 @@ func BranchExists(ctx context.Context, client *gogithub.Client, owner string, na
 }
 
 func DeleteBranch(owner string, name string, branch string) error {
-	if err := runCommand("git", "push", "-d", "origin", branch); err != nil {
+	if err := runCommand("git", "push", "origin", "--delete", branch); err != nil {
 		return fmt.Errorf("could not delete branch remotely '%s/%s@%s': %v", owner, name, branch, err)
 	}
 
@@ -94,7 +94,7 @@ func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owne
 		return fmt.Errorf("could not checkout '%s/%s@%s': %v", owner, name, branch, err)
 	}
 
-	if err := runCommand("git", "push", "origin", branch); err != nil {
+	if err := runCommand("git", "push", "-u", "origin", branch); err != nil {
 		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
 	}
 
