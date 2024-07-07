@@ -39,7 +39,7 @@ func CloneRepository(repo string, dir string) error {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
 
-	if err := runCommand("git", "remote", "add", "origin", repoUrl); err != nil {
+	if err := runCommand("git", "remote", "set-url", "origin", repoUrl); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
 
