@@ -23,7 +23,6 @@ func runCommand(name string, args ...string) error {
 
 func runAndOutputCommand(name string, args ...string) ([]byte, error) {
 	command := exec.Command(name, args...)
-	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	log.Printf("> %s %s", name, strings.Join(args, " "))
 	return command.Output()
