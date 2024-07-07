@@ -37,6 +37,7 @@ jobs:
           go run ${{ inputs.go-file-path }}
       
       - name: Check For Job Summary
+        if: always()
         run: |
           cd repository
           if test -f summary.md; then
