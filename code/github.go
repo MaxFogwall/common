@@ -170,6 +170,14 @@ func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owne
 		return fmt.Errorf("could not checkout '%s/%s@%s': %v", owner, name, branch, err)
 	}
 
+	if err := runCommand("git", "add", ".github/workflows"); err != nil {
+		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
+	}
+
+	if err := runCommand("git", "commit", "-m", "sync workflows"); err != nil {
+		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
+	}
+
 	if err := runCommand("git", "push", "-u", "origin", branch); err != nil {
 		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
 	}
@@ -253,7 +261,7 @@ func SyncRepository(targetRepo string) error {
 		Title:               gogithub.String("(sync): update workflows"),
 		Head:                gogithub.String(featureBranch),
 		Base:                gogithub.String(defaultBranch),
-		Body:                gogithub.String(""), // TODO: Link the workflow run in the description.
+		Body:                gogithub.String("TODO: Link workflow run"),
 		MaintainerCanModify: gogithub.Bool(true),
 	})
 
