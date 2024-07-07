@@ -13,11 +13,15 @@ import (
 	gogithub "github.com/google/go-github/v62/github"
 )
 
+func sanitize(log string) string {
+	return strings.ReplaceAll(log, getToken(), "<token>")
+}
+
 func runCommand(name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	log.Printf("> %s %s", name, strings.Join(args, " "))
+	log.Printf("> %s %s", name, sanitize(strings.Join(args, " ")))
 	return command.Run()
 }
 
@@ -41,12 +45,24 @@ func SetupGitHubUser(username string, email string) {
 	runCommand("git", "config", "--global", "user.email", email)
 }
 
+func getToken() string {
+	token := os.Getenv("GH_AUTH_TOKEN")
+	if token == "" {
+		log.Fatal("no GH_AUTH_TOKEN provided")
+	}
+	return token
+}
+
+func getClient() *gogithub.Client {
+	return gogithub.NewClient(nil).WithAuthToken(getToken())
+}
+
 func CloneRepository(repo string, dir string) error {
 	if PathExists(dir) {
 		DeleteDirectory(dir)
 	}
 
-	repoUrl := fmt.Sprintf("https://github.com/%s.git", repo)
+	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getToken(), repo)
 	if err := runCommand("git", "clone", repoUrl, dir); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
@@ -56,15 +72,6 @@ func CloneRepository(repo string, dir string) error {
 	}
 
 	return nil
-}
-
-func getClient() *gogithub.Client {
-	token := os.Getenv("GH_AUTH_TOKEN")
-	if token == "" {
-		log.Fatal("no GH_AUTH_TOKEN provided")
-	}
-
-	return gogithub.NewClient(nil).WithAuthToken(token)
 }
 
 func getDefaultBranch(ctx context.Context, client *gogithub.Client, owner string, name string) (string, error) {
