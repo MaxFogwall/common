@@ -14,7 +14,10 @@ import (
 )
 
 func runCommand(name string, args ...string) error {
-	return exec.Command(name, args...).Run()
+	command := exec.Command(name, args...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	return command.Run()
 }
 
 func RepoOwnerName(repo string) (string, string) {
