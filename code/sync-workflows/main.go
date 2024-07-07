@@ -36,7 +36,7 @@ func main() {
 
 		successString := "✅"
 		if syncedRepo.Error != nil {
-			successString = fmt.Sprintf("❌ %v", err)
+			successString = fmt.Sprintf("❌ %v", syncedRepo.Error)
 			shouldWorkflowSucceed = false
 		}
 
