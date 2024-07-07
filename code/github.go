@@ -151,7 +151,7 @@ func SyncRepository(targetRepo string, sourceRepoDir string) error {
 	}
 
 	if err := PushToBranch(owner, name, featureBranch); err != nil {
-		return err
+		return fmt.Errorf("could not push to branch '%s': %w", featureBranch, err)
 	}
 
 	_, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
