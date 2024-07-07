@@ -214,17 +214,13 @@ func SyncRepository(targetRepo string) error {
 	ctx := context.Background()
 	client := getClient()
 
-	_, response, err := client.Repositories.EditDefaultWorkflowPermissions(ctx, owner, name, gogithub.DefaultWorkflowPermissionRepository{
+	_, _, err := client.Repositories.EditDefaultWorkflowPermissions(ctx, owner, name, gogithub.DefaultWorkflowPermissionRepository{
 		DefaultWorkflowPermissions:   gogithub.String("write"),
 		CanApprovePullRequestReviews: gogithub.Bool(true),
 	})
 
-	if err != nil || !isOk(response) {
-		format := "could not edit default workflow perms for repo '%s/%s': %v"
-		if err != nil {
-			return fmt.Errorf(format, owner, name, err)
-		}
-		return fmt.Errorf(format, owner, name, response)
+	if err != nil {
+		return fmt.Errorf("could not edit default workflow perms for repo '%s/%s': %v", owner, name, err)
 	}
 
 	featureBranch := "sync-workflows"
