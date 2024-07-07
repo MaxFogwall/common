@@ -36,13 +36,13 @@ func main() {
 		successString := "✅"
 		if syncedRepo.Error != nil {
 			successString = "❌"
-			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- %s (❌ %s)\r\n", repoString, syncedRepo.Error))
+			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- %s (❌ %s)", repoString, syncedRepo.Error))
 			anyRepoHadErrors = true
 		}
 
 		timeString := syncedRepo.ElapsedTime.String()
 
-		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |\r\n", repoString, successString, timeString))
+		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |", repoString, successString, timeString))
 	}
 
 	var summaryLines []string
