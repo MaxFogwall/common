@@ -7,6 +7,9 @@ on:
       - '.github/workflows/synced_**.yml'
   workflow_dispatch:
 
+permissions:
+  content: write
+
 jobs:
   run-sync-workflows:
     uses: 'MaxFogwall/common/.github/workflows/run-go-file.yaml@main'
