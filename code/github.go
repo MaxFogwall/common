@@ -151,6 +151,10 @@ func isOk(response *gogithub.Response) bool {
 }
 
 func SyncRepository(targetRepo string, sourceRepoDir string) error {
+	if err := locallySync(targetRepo, sourceRepoDir); err != nil {
+		return fmt.Errorf("could not sync locally: %w", err)
+	}
+
 	owner, name := RepoOwnerName(targetRepo)
 	ctx := context.Background()
 	client := getClient()
@@ -162,10 +166,6 @@ func SyncRepository(targetRepo string, sourceRepoDir string) error {
 
 	if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
 		return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
-	}
-
-	if err := locallySync(targetRepo, sourceRepoDir); err != nil {
-		return fmt.Errorf("could not sync locally: %w", err)
 	}
 
 	_, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
