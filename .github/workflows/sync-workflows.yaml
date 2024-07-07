@@ -7,6 +7,9 @@ on:
       - '.github/workflows/synced_**.yml'
   workflow_dispatch:
 
+env:
+  GH_AUTH_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}
+
 jobs:
   run-sync-workflows:
     uses: 'MaxFogwall/common/.github/workflows/run-go-file.yaml@main'

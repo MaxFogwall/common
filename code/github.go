@@ -39,9 +39,9 @@ func CloneRepository(repo string, dir string) error {
 }
 
 func getClient() *gogithub.Client {
-	token := os.Getenv("GITHUB_AUTH_TOKEN")
+	token := os.Getenv("GH_AUTH_TOKEN")
 	if token == "" {
-		log.Fatal("no GITHUB_AUTH_TOKEN provided")
+		log.Fatal("no GH_AUTH_TOKEN provided")
 	}
 
 	return gogithub.NewClient(nil).WithAuthToken(token)
