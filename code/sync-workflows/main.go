@@ -7,41 +7,42 @@ import (
 	"strings"
 	"time"
 
-	files "github.com/MaxFogwall/common/code"
+	common "github.com/MaxFogwall/common/code"
 )
 
 func main() {
-	data := []byte(files.ReadFile("repos.json"))
+	sourceRepo := "MaxFogwall/common"
+	data := []byte(common.ReadFile("repos.json"))
 
-	var repositories []string
-	err := json.Unmarshal(data, &repositories)
+	var targetRepos []string
+	err := json.Unmarshal(data, &targetRepos)
 	if err != nil {
 		panic(err)
 	}
 
-	syncedRepositories := syncWorkflows(repositories)
-	syncedRepositoriesTable := "| Repository | Success | T-Start |\r\n"
-	syncedRepositoriesTable += "|-:|:-:|:-|\r\n"
+	syncedRepos := syncWorkflows(sourceRepo, targetRepos)
+	syncedReposTable := "| Repository | Success | T-Start |\r\n"
+	syncedReposTable += "|:-|:-:|-:|\r\n"
 
-	for _, syncedRepository := range syncedRepositories {
-		repositoryOwnerNameSlice := strings.Split(syncedRepository.Identifier, "/")
+	for _, syncedRepo := range syncedRepos {
+		repositoryOwnerNameSlice := strings.Split(syncedRepo.Identifier, "/")
 		if len(repositoryOwnerNameSlice) < 2 {
 			panic(errors.New("one of the repositories was not in the correct format (i.e. \"owner/name\")"))
 		}
-		repositoryName := strings.Split(syncedRepository.Identifier, "/")[1]
-		repositoryString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", repositoryName, syncedRepository.Identifier)
+		repoName := strings.Split(syncedRepo.Identifier, "/")[1]
+		repoString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", repoName, syncedRepo.Identifier)
 
 		successString := "❌"
-		if syncedRepository.Success {
+		if syncedRepo.Success {
 			successString = "✅"
 		}
 
-		timeString := syncedRepository.ElapsedTime.String()
+		timeString := syncedRepo.ElapsedTime.String()
 
-		syncedRepositoriesTable += fmt.Sprintf("| %s | %s | %s |\r\n", repositoryString, successString, timeString)
+		syncedReposTable += fmt.Sprintf("| %s | %s | %s |\r\n", repoString, successString, timeString)
 	}
 
-	files.MakeSummary("### Synchronization Complete\r\n" + syncedRepositoriesTable)
+	common.MakeSummary("### Synchronization Complete\r\n" + syncedReposTable)
 }
 
 type SyncedRepository struct {
@@ -50,22 +51,28 @@ type SyncedRepository struct {
 	ElapsedTime time.Duration
 }
 
-func syncWorkflows(repositories []string) []SyncedRepository {
+func syncWorkflows(sourceRepo string, targetRepos []string) []SyncedRepository {
 	startTime := time.Now()
-	syncedRepositories := []SyncedRepository{}
+	syncedRepos := []SyncedRepository{}
 
-	for _, repository := range repositories {
-		// TODO: Actually add the synchronization itself.
+	sourceRepoDir := "SourceRepo"
+	common.CloneRepository(sourceRepo, sourceRepoDir)
+
+	for _, targetRepo := range targetRepos {
+		success := true
+		if err := common.SyncRepository(targetRepo, sourceRepoDir); err != nil {
+			success = false
+		}
 
 		elapsedTime := time.Since(startTime)
 		syncedRepository := SyncedRepository{
-			Identifier:  repository,
-			Success:     true,
+			Identifier:  targetRepo,
+			Success:     success,
 			ElapsedTime: elapsedTime,
 		}
 
-		syncedRepositories = append(syncedRepositories, syncedRepository)
+		syncedRepos = append(syncedRepos, syncedRepository)
 	}
 
-	return syncedRepositories
+	return syncedRepos
 }
