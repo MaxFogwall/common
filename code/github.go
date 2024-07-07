@@ -17,7 +17,7 @@ func runCommand(name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	fmt.Printf("> %s %s", name, strings.Join(args, " "))
+	log.Printf("> %s %s", name, strings.Join(args, " "))
 	return command.Run()
 }
 
