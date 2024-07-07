@@ -36,6 +36,11 @@ func RepoOwnerName(repo string) (string, string) {
 	return ownerNameSlice[0], ownerNameSlice[1]
 }
 
+func SetupGitHubUser(username string, email string) {
+	runCommand("git", "config", "--global", "user.name", username)
+	runCommand("git", "config", "--global", "user.email", email)
+}
+
 func CloneRepository(repo string, dir string) error {
 	if PathExists(dir) {
 		DeleteDirectory(dir)

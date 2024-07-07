@@ -12,6 +12,8 @@ import (
 )
 
 func main() {
+	common.SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
+
 	data := []byte(common.ReadFile("repos.json"))
 
 	var repos []string
