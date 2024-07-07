@@ -36,7 +36,7 @@ func main() {
 		successString := "✅"
 		if syncedRepo.Error != nil {
 			successString = "❌"
-			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- %s (❌ %s)", repoString, syncedRepo.Error))
+			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", repoString, syncedRepo.Error))
 			anyRepoHadErrors = true
 		}
 
