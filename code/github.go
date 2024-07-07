@@ -56,7 +56,10 @@ func getDefaultBranch(ctx context.Context, client *gogithub.Client, owner string
 }
 
 func BranchExists(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) (bool, error) {
-	branchInfo, _, err := client.Repositories.GetBranch(ctx, owner, name, branch, 1)
+	branchInfo, response, err := client.Repositories.GetBranch(ctx, owner, name, branch, 1)
+	if response.StatusCode == 404 {
+		return false, nil
+	}
 	if err != nil {
 		return false, fmt.Errorf("could not get branch info from '%s/%s@%s': %v", owner, name, branch, err)
 	}
