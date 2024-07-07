@@ -166,7 +166,7 @@ func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owne
 	return nil
 }
 
-func locallySync(targetRepo string, sourceRepoDir string) error {
+func locallySync(targetRepo string) error {
 	targetRepoDir := "TargetRepo"
 	if err := CloneRepository(targetRepo, targetRepoDir); err != nil {
 		return err
@@ -178,7 +178,7 @@ func locallySync(targetRepo string, sourceRepoDir string) error {
 	}
 
 	targetWorkflowPath := targetRepoDir + "/.github/workflows"
-	sourceWorkflowPath := sourceRepoDir + "/.github/workflows"
+	sourceWorkflowPath := ".github/workflows"
 
 	if !PathExists(targetWorkflowPath) {
 		if err := CreateDirectory(targetWorkflowPath); err != nil {
@@ -201,8 +201,8 @@ func isOk(response *gogithub.Response) bool {
 	return statusCodeString[0] != '2'
 }
 
-func SyncRepository(targetRepo string, sourceRepoDir string) error {
-	if err := locallySync(targetRepo, sourceRepoDir); err != nil {
+func SyncRepository(targetRepo string) error {
+	if err := locallySync(targetRepo); err != nil {
 		return fmt.Errorf("could not sync locally: %w", err)
 	}
 

@@ -12,16 +12,15 @@ import (
 )
 
 func main() {
-	sourceRepo := "MaxFogwall/common"
 	data := []byte(common.ReadFile("repos.json"))
 
-	var targetRepos []string
-	err := json.Unmarshal(data, &targetRepos)
+	var repos []string
+	err := json.Unmarshal(data, &repos)
 	if err != nil {
 		panic(err)
 	}
 
-	syncedRepos := syncWorkflows(sourceRepo, targetRepos)
+	syncedRepos := syncWorkflows(repos)
 	var syncedReposTable []string
 	syncedReposTable = append(syncedReposTable, "| Repository | Success | T-Start |")
 	syncedReposTable = append(syncedReposTable, "|:-|:-:|-:|")
@@ -65,22 +64,19 @@ type SyncedRepository struct {
 	ElapsedTime time.Duration
 }
 
-func syncWorkflows(sourceRepo string, targetRepos []string) []SyncedRepository {
+func syncWorkflows(repos []string) []SyncedRepository {
 	startTime := time.Now()
 	syncedRepos := []SyncedRepository{}
 
-	sourceRepoDir := "SourceRepo"
-	common.CloneRepository(sourceRepo, sourceRepoDir)
-
-	for _, targetRepo := range targetRepos {
-		err := common.SyncRepository(targetRepo, sourceRepoDir)
+	for _, repo := range repos {
+		err := common.SyncRepository(repo)
 		if err != nil {
-			log.Printf("Failed to sync to '%s': %v\n", targetRepo, err)
+			log.Printf("Failed to sync to '%s': %v\n", repo, err)
 		}
 
 		elapsedTime := time.Since(startTime)
 		syncedRepository := SyncedRepository{
-			Identifier:  targetRepo,
+			Identifier:  repo,
 			Error:       err,
 			ElapsedTime: elapsedTime,
 		}
