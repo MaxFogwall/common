@@ -32,11 +32,11 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
+        env:
+          GH_AUTH_TOKEN: "${{ secrets.GH_AUTH_TOKEN }}"
         run: |
           cd repository  # Necessary so that the go.mod file can be found.
           go run ${{ inputs.go-file-path }}
-        env:
-          GH_AUTH_TOKEN: "${{ secrets.GH_AUTH_TOKEN }}"
       
       - name: Check For Job Summary
         if: always()
