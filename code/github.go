@@ -167,19 +167,19 @@ func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owne
 	}
 
 	if err := runCommand("git", "checkout", "-b", branch); err != nil {
-		return fmt.Errorf("could not checkout '%s/%s@%s': %v", owner, name, branch, err)
+		return fmt.Errorf("could not checkout '%s': %v", branch, err)
 	}
 
 	if err := runCommand("git", "add", ".github/workflows"); err != nil {
-		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
+		return fmt.Errorf("could not add workflows: %v", err)
 	}
 
 	if err := runCommand("git", "commit", "-m", "sync workflows"); err != nil {
-		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
+		return fmt.Errorf("could not commit changes: %v", err)
 	}
 
 	if err := runCommand("git", "push", "-u", "origin", branch); err != nil {
-		return fmt.Errorf("could not push to remote '%s/%s@%s': %v", owner, name, branch, err)
+		return fmt.Errorf("could not push to remote '%s': %v", branch, err)
 	}
 
 	return nil
