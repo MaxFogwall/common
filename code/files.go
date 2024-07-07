@@ -44,14 +44,6 @@ func MakeSummary(contents string) bool {
 	return WriteFile("summary.md", contents)
 }
 
-func CheckValidDir(dirs ...string) {
-	for _, dir := range dirs {
-		if err, _ := os.ReadDir(dir); err != nil {
-			log.Fatalf("directory '%s' is not valid: %v", dir, err)
-		}
-	}
-}
-
 func DeleteDirectory(dir string) {
 	if err := os.RemoveAll(dir); err != nil {
 		log.Fatalf("could not delete directory '%s': %v", dir, err)
