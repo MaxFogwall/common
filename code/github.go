@@ -242,7 +242,7 @@ func SyncRepository(targetRepo string) error {
 		return err
 	}
 
-	_, response, err = client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
+	_, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
 		Title:               gogithub.String("(sync): update workflows"),
 		Head:                gogithub.String(featureBranch),
 		Base:                gogithub.String(defaultBranch),
