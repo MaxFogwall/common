@@ -118,7 +118,7 @@ func SyncRepository(targetRepo string, sourceRepoDir string) error {
 		return fmt.Errorf("could not sync locally: %w", err)
 	}
 
-	owner, name := repoOwnerName(targetRepo)
+	owner, name := RepoOwnerName(targetRepo)
 	ctx := context.Background()
 	client := getClient()
 	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
