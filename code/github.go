@@ -216,7 +216,7 @@ func locallySync(targetRepo string, targetRepoDir string) error {
 
 func isOk(response *gogithub.Response) bool {
 	statusCodeString := fmt.Sprintf("%v", response.StatusCode)
-	return statusCodeString[0] != '2'
+	return statusCodeString[0] != '4' && statusCodeString[0] != '5'
 }
 
 func SyncRepository(targetRepo string) error {
@@ -229,13 +229,17 @@ func SyncRepository(targetRepo string) error {
 	ctx := context.Background()
 	client := getClient()
 
-	_, _, err := client.Repositories.EditDefaultWorkflowPermissions(ctx, owner, name, gogithub.DefaultWorkflowPermissionRepository{
+	_, response, err := client.Repositories.EditDefaultWorkflowPermissions(ctx, owner, name, gogithub.DefaultWorkflowPermissionRepository{
 		DefaultWorkflowPermissions:   gogithub.String("write"),
 		CanApprovePullRequestReviews: gogithub.Bool(true),
 	})
 
-	if err != nil {
-		return fmt.Errorf("could not edit default workflow perms for repo '%s/%s': %v", owner, name, err)
+	if err != nil || !isOk(response) {
+		format := "could not create pull request from '%s' to '%s': %v"
+		if err != nil {
+			return fmt.Errorf(format, owner, name, err)
+		}
+		return fmt.Errorf(format, owner, name, response.Body)
 	}
 
 	featureBranch := "sync-workflows"
@@ -257,7 +261,7 @@ func SyncRepository(targetRepo string) error {
 		return err
 	}
 
-	_, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
+	_, response, err = client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
 		Title:               gogithub.String("(sync): update workflows"),
 		Head:                gogithub.String(featureBranch),
 		Base:                gogithub.String(defaultBranch),
@@ -270,7 +274,7 @@ func SyncRepository(targetRepo string) error {
 		if err != nil {
 			return fmt.Errorf(format, featureBranch, defaultBranch, err)
 		}
-		return fmt.Errorf(format, featureBranch, defaultBranch, response)
+		return fmt.Errorf(format, featureBranch, defaultBranch, response.Body)
 	}
 
 	// TODO: Approve pull request.
