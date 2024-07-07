@@ -13,4 +13,4 @@ jobs:
     with:
       go-file-path: 'code/sync-workflows/main.go'
     secrets:
-      GH_AUTH_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}
+      gh-auth-token: ${{ secrets.GH_AUTH_TOKEN }}
