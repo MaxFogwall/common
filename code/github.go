@@ -77,12 +77,12 @@ func ExecInDir(dir string, exec func() error) error {
 		return fmt.Errorf("could not get working directory: %v", err)
 	}
 
-	if err := runCommand("cd", workingDir+"/"+dir); err != nil {
+	if err := os.Chdir(workingDir + "/" + dir); err != nil {
 		return fmt.Errorf("could not change directory to '%s': %v", dir, err)
 	}
 
 	if execErr := exec(); execErr != nil {
-		if err := runCommand("cd", workingDir); err != nil {
+		if err := os.Chdir(workingDir); err != nil {
 			return fmt.Errorf("could not change directory back to '%s': %v", dir, err)
 		}
 		return execErr
