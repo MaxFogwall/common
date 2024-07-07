@@ -69,13 +69,22 @@ func BranchExists(ctx context.Context, client *gogithub.Client, owner string, na
 	return branchInfo != nil, nil
 }
 
-func DeleteBranch(owner string, name string, branch string) error {
-	if err := runCommand("git", "push", "origin", "--delete", branch); err != nil {
-		return fmt.Errorf("could not delete branch remotely '%s/%s@%s': %v", owner, name, branch, err)
+func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
+	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+	if err != nil {
+		return fmt.Errorf("could not get default branch in '%s/%s': %v", owner, name, err)
+	}
+
+	if err := runCommand("git", "checkout", defaultBranch); err != nil {
+		return fmt.Errorf("could not checkout default branch '%s/%s@%s': %v", owner, name, defaultBranch, err)
 	}
 
 	if err := runCommand("git", "branch", "-D", branch); err != nil {
 		return fmt.Errorf("could not delete branch locally '%s/%s@%s': %v", owner, name, branch, err)
+	}
+
+	if err := runCommand("git", "push", "origin", "--delete", branch); err != nil {
+		return fmt.Errorf("could not delete branch remotely '%s/%s@%s': %v", owner, name, branch, err)
 	}
 
 	return nil
@@ -83,7 +92,7 @@ func DeleteBranch(owner string, name string, branch string) error {
 
 func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
 	if exists, err := BranchExists(ctx, client, owner, name, branch); err == nil && exists {
-		if err := DeleteBranch(owner, name, branch); err != nil {
+		if err := DeleteBranch(ctx, client, owner, name, branch); err != nil {
 			return fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
 		}
 	} else if err != nil {
