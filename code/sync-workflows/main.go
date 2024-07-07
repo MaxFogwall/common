@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ func main() {
 	syncedRepos := syncWorkflows(sourceRepo, targetRepos)
 	syncedReposTable := "| Repository | Success | T-Start |\r\n"
 	syncedReposTable += "|:-|:-:|-:|\r\n"
+	shouldWorkflowSucceed := true
 
 	for _, syncedRepo := range syncedRepos {
 		repositoryOwnerNameSlice := strings.Split(syncedRepo.Identifier, "/")
@@ -32,9 +34,10 @@ func main() {
 		repoName := strings.Split(syncedRepo.Identifier, "/")[1]
 		repoString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", repoName, syncedRepo.Identifier)
 
-		successString := "❌"
-		if syncedRepo.Success {
-			successString = "✅"
+		successString := "✅"
+		if syncedRepo.Error != nil {
+			successString = fmt.Sprintf("❌ %v", err)
+			shouldWorkflowSucceed = false
 		}
 
 		timeString := syncedRepo.ElapsedTime.String()
@@ -43,11 +46,15 @@ func main() {
 	}
 
 	common.MakeSummary("### Synchronization Complete\r\n" + syncedReposTable)
+
+	if !shouldWorkflowSucceed {
+		panic(errors.New("one or more repositories were not synced successfully"))
+	}
 }
 
 type SyncedRepository struct {
 	Identifier  string
-	Success     bool
+	Error       error
 	ElapsedTime time.Duration
 }
 
@@ -59,15 +66,15 @@ func syncWorkflows(sourceRepo string, targetRepos []string) []SyncedRepository {
 	common.CloneRepository(sourceRepo, sourceRepoDir)
 
 	for _, targetRepo := range targetRepos {
-		success := true
-		if err := common.SyncRepository(targetRepo, sourceRepoDir); err != nil {
-			success = false
+		err := common.SyncRepository(targetRepo, sourceRepoDir)
+		if err != nil {
+			log.Printf("Failed to sync to '%s': %v\n", targetRepo, err)
 		}
 
 		elapsedTime := time.Since(startTime)
 		syncedRepository := SyncedRepository{
 			Identifier:  targetRepo,
-			Success:     success,
+			Error:       err,
 			ElapsedTime: elapsedTime,
 		}
 
