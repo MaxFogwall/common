@@ -17,7 +17,7 @@ func runCommand(name string, args ...string) error {
 	return exec.Command(name, args...).Run()
 }
 
-func repoOwnerName(repo string) (string, string) {
+func RepoOwnerName(repo string) (string, string) {
 	ownerNameSlice := strings.Split(repo, "/")
 	if len(ownerNameSlice) < 2 {
 		panic(errors.New("repository identifier was not in the correct format (i.e. \"owner/name\")"))

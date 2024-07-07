@@ -22,32 +22,39 @@ func main() {
 	}
 
 	syncedRepos := syncWorkflows(sourceRepo, targetRepos)
-	syncedReposTable := "| Repository | Success | T-Start |\r\n"
-	syncedReposTable += "|:-|:-:|-:|\r\n"
-	shouldWorkflowSucceed := true
+	var syncedReposTable []string
+	syncedReposTable = append(syncedReposTable, "| Repository | Success | T-Start |")
+	syncedReposTable = append(syncedReposTable, "|:-|:-:|-:|")
+
+	var syncedReposErrors []string
+	anyRepoHadErrors := false
 
 	for _, syncedRepo := range syncedRepos {
-		repositoryOwnerNameSlice := strings.Split(syncedRepo.Identifier, "/")
-		if len(repositoryOwnerNameSlice) < 2 {
-			panic(errors.New("one of the repositories was not in the correct format (i.e. \"owner/name\")"))
-		}
-		repoName := strings.Split(syncedRepo.Identifier, "/")[1]
-		repoString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", repoName, syncedRepo.Identifier)
+		_, name := common.RepoOwnerName(syncedRepo.Identifier)
+		repoString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", name, syncedRepo.Identifier)
 
 		successString := "✅"
 		if syncedRepo.Error != nil {
-			successString = fmt.Sprintf("❌ %v", syncedRepo.Error)
-			shouldWorkflowSucceed = false
+			successString = "❌"
+			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- %s (❌ %s)\r\n", repoString, syncedRepo.Error))
+			anyRepoHadErrors = true
 		}
 
 		timeString := syncedRepo.ElapsedTime.String()
 
-		syncedReposTable += fmt.Sprintf("| %s | %s | %s |\r\n", repoString, successString, timeString)
+		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |\r\n", repoString, successString, timeString))
 	}
 
-	common.MakeSummary("### Synchronization Complete\r\n" + syncedReposTable)
+	var summaryLines []string
+	summaryLines = append(summaryLines, "### Overview")
+	summaryLines = append(summaryLines, strings.Join(syncedReposTable, "\r\n"))
+	if anyRepoHadErrors {
+		summaryLines = append(summaryLines, "### Errors")
+		summaryLines = append(summaryLines, strings.Join(syncedReposErrors, "\r\n"))
+	}
+	common.MakeSummary(strings.Join(summaryLines, "\r\n"))
 
-	if !shouldWorkflowSucceed {
+	if anyRepoHadErrors {
 		panic(errors.New("one or more repositories were not synced successfully"))
 	}
 }
