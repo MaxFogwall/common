@@ -15,9 +15,6 @@ on:
         type: 'string'
         required: true
         description: 'The file path to the Go file (e.g. "code/code-1.go").'
-    secrets:
-      gh-auth-token:
-        type: 'string'
 
 jobs:
   run-go-file:
@@ -39,7 +36,7 @@ jobs:
           cd repository  # Necessary so that the go.mod file can be found.
           go run ${{ inputs.go-file-path }}
         env:
-          GH_AUTH_TOKEN: "${{ secrets.gh-auth-token }}"
+          GH_AUTH_TOKEN: "${{ secrets.GH_AUTH_TOKEN }}"
       
       - name: Check For Job Summary
         if: always()
