@@ -81,8 +81,16 @@ func DeleteBranch(owner string, name string, branch string) error {
 	return nil
 }
 
-func PushToBranch(owner string, name string, branch string) error {
-	if err := runCommand("git", "checkout", branch); err != nil {
+func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
+	if exists, err := BranchExists(ctx, client, owner, name, branch); err == nil && exists {
+		if err := DeleteBranch(owner, name, branch); err != nil {
+			return fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("could not see if old '%s' branch exists: %w", branch, err)
+	}
+
+	if err := runCommand("git", "checkout", "-b", branch); err != nil {
 		return fmt.Errorf("could not checkout '%s/%s@%s': %v", owner, name, branch, err)
 	}
 
@@ -142,16 +150,8 @@ func SyncRepository(targetRepo string, sourceRepoDir string) error {
 	}
 	featureBranch := "sync-workflows"
 
-	if exists, err := BranchExists(ctx, client, owner, name, featureBranch); err == nil && exists {
-		if err := DeleteBranch(owner, name, featureBranch); err != nil {
-			return fmt.Errorf("could not delete old '%s' branch: %w", featureBranch, err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("could not see if old '%s' branch exists: %w", featureBranch, err)
-	}
-
-	if err := PushToBranch(owner, name, featureBranch); err != nil {
-		return fmt.Errorf("could not push to branch '%s': %w", featureBranch, err)
+	if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
+		return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
 	}
 
 	_, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
