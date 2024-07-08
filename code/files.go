@@ -3,7 +3,6 @@ package common
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -41,11 +40,6 @@ func ReadFile(filePath string) string {
 }
 
 func MakeSummary(contents string) bool {
-	execPath, err := os.Executable()
-	if err != nil {
-		log.Printf("::warning::Could not get the executable path for creating a job summary; %v\r\n", err)
-	}
-	os.Chdir(execPath)
 	return WriteFile("summary.md", contents)
 }
 
