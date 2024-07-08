@@ -265,7 +265,7 @@ func SyncRepository(targetRepo string) error {
 		return err
 	}
 
-	_, response, err = client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
+	pullRequest, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
 		Title:               gogithub.String("(sync): update workflows"),
 		Head:                gogithub.String(featureBranch),
 		Base:                gogithub.String(defaultBranch),
@@ -279,6 +279,18 @@ func SyncRepository(targetRepo string) error {
 			return fmt.Errorf(format, featureBranch, defaultBranch, err)
 		}
 		return fmt.Errorf(format, featureBranch, defaultBranch, response.Body)
+	}
+
+	_, response, err = client.PullRequests.CreateReview(ctx, owner, name, *pullRequest.Number, &gogithub.PullRequestReviewRequest{
+		Event: gogithub.String("APPROVE"),
+	})
+
+	if err != nil || !isOk(response) {
+		format := "could not approve pull request #%v: %v"
+		if err != nil {
+			return fmt.Errorf(format, *pullRequest.Number, err)
+		}
+		return fmt.Errorf(format, *pullRequest.Number, response.Body)
 	}
 
 	// TODO: Approve pull request.
