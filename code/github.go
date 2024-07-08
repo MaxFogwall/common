@@ -99,6 +99,10 @@ func ExecInDir(dir string, exec func() error) error {
 		return execErr
 	}
 
+	if err := os.Chdir(workingDir); err != nil {
+		return fmt.Errorf("could not change directory back to '%s': %v", dir, err)
+	}
+
 	return nil
 }
 
