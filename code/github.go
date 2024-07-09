@@ -43,7 +43,7 @@ func SetupGitHubUser(username string, email string) {
 }
 
 func UpdateJobSummary(contents string) error {
-	log.Println("GITHUB_WORKSPACE: $GITHUB_WORKSPACE")
+	log.Printf("GITHUB_WORKSPACE: %s", getEnv("GITHUB_WORKSPACE"))
 	return ExecInDir("$GITHUB_WORKSPACE", func() error {
 		if err := runCommand("\"### test\"", ">>", "$GITHUB_STEP_SUMMARY"); err != nil {
 			return fmt.Errorf("could not update job summary: %v", err)
