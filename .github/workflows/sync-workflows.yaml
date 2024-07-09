@@ -16,12 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: |
-          echo "REPOS_JSON=$(jq -c . < repos.json)" >> $GITHUB_ENV
-      
       - id: matrix
         run: |
-          echo "repos=${{ fromJSON(env.REPOS_JSON) }}" >> $GITHUB_OUTPUT
+          echo "repos=$(jq -c . < repos.json)" >> $GITHUB_OUTPUT
       
       - run: |
           echo "${{ steps.matrix.outputs.repos }}"
