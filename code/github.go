@@ -272,23 +272,6 @@ func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner stri
 	return nil
 }
 
-func AllowWorkflowRepoWrites(ctx context.Context, client *gogithub.Client, owner string, name string) error {
-	_, response, err := client.Repositories.EditDefaultWorkflowPermissions(ctx, owner, name, gogithub.DefaultWorkflowPermissionRepository{
-		DefaultWorkflowPermissions:   gogithub.String("write"),
-		CanApprovePullRequestReviews: gogithub.Bool(true),
-	})
-
-	if err != nil || !isOk(response) {
-		format := "could not create pull request from '%s' to '%s': %v"
-		if err != nil {
-			return fmt.Errorf(format, owner, name, err)
-		}
-		return fmt.Errorf(format, owner, name, response.Body)
-	}
-
-	return nil
-}
-
 func SyncRepository(repo string) error {
 	owner, name := RepoOwnerName(repo)
 	repoDir := name
@@ -298,10 +281,6 @@ func SyncRepository(repo string) error {
 
 	ctx := context.Background()
 	client := getClient()
-
-	if err := AllowWorkflowRepoWrites(ctx, client, owner, name); err != nil {
-		return err
-	}
 
 	featureBranch := "sync-workflows"
 	err := ExecInDir(repoDir, func() error {
