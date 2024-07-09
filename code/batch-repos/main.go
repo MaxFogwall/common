@@ -23,7 +23,7 @@ func getRepos() []string {
 	return repos
 }
 
-func appendBatchAsJson(batch []string, batches []string) ([]string, []string) {
+func appendBatchAsJsonString(batch []string, batches []string) ([]string, []string) {
 	batchJson, err := json.Marshal(batch)
 	if err != nil {
 		log.Fatalf("could not convert batch '%v' to JSON: %v", batch, err)
@@ -56,13 +56,13 @@ func main() {
 
 		// If full, add batch and start over.
 		if (index+1)%batchSize == 0 {
-			batch, batches = appendBatchAsJson(batch, batches)
+			batch, batches = appendBatchAsJsonString(batch, batches)
 		}
 	}
 
 	// If we have a partially full batch left over, add it too.
 	if len(batch) > 0 {
-		_, batches = appendBatchAsJson(batch, batches)
+		_, batches = appendBatchAsJsonString(batch, batches)
 	}
 
 	repoBatchesJson, err := json.Marshal(batches)
