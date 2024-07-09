@@ -13,20 +13,6 @@ import (
 	gogithub "github.com/google/go-github/v62/github"
 )
 
-func sanitize(log string) string {
-	sanitizied := log
-	sensitiveStrings := []string{
-		getToken("GH_PAT_BOT"),
-		getToken("GH_PAT_BOT_APPROVER"),
-	}
-
-	for _, sensitiveString := range sensitiveStrings {
-		sanitizied = strings.ReplaceAll(sanitizied, sensitiveString, "<token>")
-	}
-
-	return sanitizied
-}
-
 func runCommand(name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Stdout = os.Stdout
@@ -63,12 +49,34 @@ func getToken(tokenName string) string {
 	return token
 }
 
+func getClientToken() string {
+	return getToken("GH_PAT_MF")
+}
+
+func getApproverClientToken() string {
+	return getToken("GH_PAT_AYYXD")
+}
+
+func sanitize(log string) string {
+	sanitizied := log
+	sensitiveStrings := []string{
+		getClientToken(),
+		getApproverClientToken(),
+	}
+
+	for _, sensitiveString := range sensitiveStrings {
+		sanitizied = strings.ReplaceAll(sanitizied, sensitiveString, "<token>")
+	}
+
+	return sanitizied
+}
+
 func getClient() *gogithub.Client {
-	return gogithub.NewClient(nil).WithAuthToken(getToken("GH_PAT_BOT"))
+	return gogithub.NewClient(nil).WithAuthToken(getClientToken())
 }
 
 func getApproverClient() *gogithub.Client {
-	return gogithub.NewClient(nil).WithAuthToken(getToken("GH_PAT_BOT_APPROVER"))
+	return gogithub.NewClient(nil).WithAuthToken(getApproverClientToken())
 }
 
 func CloneRepository(repo string, dir string) error {
@@ -76,7 +84,7 @@ func CloneRepository(repo string, dir string) error {
 		DeleteDirectory(dir)
 	}
 
-	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getToken("GH_PAT_BOT"), repo)
+	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getClientToken(), repo)
 	if err := runCommand("git", "clone", repoUrl, dir); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
