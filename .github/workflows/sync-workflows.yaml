@@ -18,9 +18,9 @@ jobs:
   show-repos:
     needs: [ get-repos ]
     steps:
-      run: |
-        echo "OUTPUT ${{ needs.get-repos.outputs.go-output }}"
-        echo "fromJSON(OUTPUT) ${{ fromJSON(needs.get-repos.outputs.go-output) }}"
+      - run: |
+          echo "OUTPUT ${{ needs.get-repos.outputs.go-output }}"
+          echo "fromJSON(OUTPUT) ${{ fromJSON(needs.get-repos.outputs.go-output) }}"
 
   sync-repos:
     needs: [ show-repos ] # TODO
