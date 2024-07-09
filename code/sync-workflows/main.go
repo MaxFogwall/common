@@ -113,6 +113,7 @@ func syncWorkflows(repos []string) []SyncedRepository {
 		}
 
 		syncedRepos = append(syncedRepos, syncedRepository)
+		WriteSyncedReposSummary(syncedRepos)
 	}
 
 	return syncedRepos
@@ -122,7 +123,6 @@ func main() {
 	targetRepos := getTargetRepos()
 	syncedRepos := syncWorkflows(targetRepos)
 
-	WriteSyncedReposSummary(syncedRepos)
 	if AnySyncedRepoHasError(syncedRepos) {
 		panic(errors.New("one or more repositories were not synced successfully"))
 	}
