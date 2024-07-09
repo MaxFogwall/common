@@ -24,8 +24,10 @@ jobs:
       matrix:
         repo-batch: ${{ fromJSON(needs.get-repos.outputs.go-output).batches }}
       fail-fast: false
+    env:
+      REPO_BATCH: ${{ matrix.repo-batch }}
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/sync-workflows/main.go'
-      go-args: '${{ matrix.repo-batch }}'
+      go-args: $REPO_BATCH
     secrets: inherit
