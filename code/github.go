@@ -289,7 +289,7 @@ func SyncRepository(repo string) error {
 
 	featureBranch := "sync-workflows"
 	err := ExecInDir(repoDir, func() error {
-		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
+		SetupGitHubUser("workflow-sync-prototype", "max.fogwa.ll@gmail.com")
 		if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
 		}
