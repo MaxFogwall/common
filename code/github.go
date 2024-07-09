@@ -50,7 +50,7 @@ func getToken(tokenName string) string {
 }
 
 func getClientToken() string {
-	return getToken("GITHUB_TOKEN")
+	return getToken("GH_PAT_ORG")
 }
 
 func getApproverClientToken() string {
