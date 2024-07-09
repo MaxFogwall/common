@@ -15,15 +15,8 @@ jobs:
       go-file-path: 'code/batch-repos/main.go'
       go-args: 2
 
-  show-repos:
-    needs: [ get-repos ]
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "OUTPUT : ${{ needs.get-repos.outputs.go-output }}"
-
   sync-repos:
-    needs: [ show-repos ] # TODO
+    needs: [ get-repos ]
     permissions:
       contents: write
       pull-requests: write
