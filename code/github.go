@@ -139,13 +139,25 @@ func RemoteBranchExists(ctx context.Context, client *gogithub.Client, owner stri
 	return branchInfo != nil, nil
 }
 
+func IsWorkingTreeClean() (bool, error) {
+	_, err := runAndOutputCommand("git", "diff", "--exit-code")
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.Success(), nil
+		}
+		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
+	}
+
+	return true, nil
+}
+
 func LocalBranchExists(branch string) (bool, error) {
 	_, err := runAndOutputCommand("git", "rev-parse", "--verify", branch)
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return exitErr.Success(), nil
 		}
-		return false, fmt.Errorf("could not verify whether branch '%s' exists locally: %v", branch, err)
+		return false, fmt.Errorf("could not check if branch '%s' exists locally: %v", branch, err)
 	}
 
 	return true, nil
@@ -198,6 +210,13 @@ func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owne
 
 	if err := runCommand("git", "add", ".github/workflows"); err != nil {
 		return fmt.Errorf("could not add workflows: %v", err)
+	}
+
+	if clean, err := IsWorkingTreeClean(); err != nil {
+		return err
+	} else if clean {
+		log.Println("No changes to commit, we are up to date!")
+		return nil
 	}
 
 	if err := runCommand("git", "commit", "-m", "sync workflows"); err != nil {
