@@ -42,15 +42,8 @@ func SetupGitHubUser(username string, email string) {
 	runCommand("git", "config", "user.email", email)
 }
 
-func UpdateJobSummary(contents string) error {
-	log.Printf("GITHUB_STEP_SUMMARY: %s", getEnv("GITHUB_STEP_SUMMARY"))
-	return ExecInDir("$GITHUB_WORKSPACE", func() error {
-		if err := runCommand("\"### test\"", ">>", "$GITHUB_STEP_SUMMARY"); err != nil {
-			return fmt.Errorf("could not update job summary: %v", err)
-		}
-
-		return nil
-	})
+func UpdateJobSummary(contents string) {
+	WriteFile(getEnv("GITHUB_STEP_SUMMARY"), contents)
 }
 
 func getEnv(key string) string {
