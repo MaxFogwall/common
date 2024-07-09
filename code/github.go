@@ -21,7 +21,7 @@ func sanitize(log string) string {
 	}
 
 	for _, sensitiveString := range sensitiveStrings {
-		sanitizied = strings.ReplaceAll(sanitizied, sensitiveString, "***")
+		sanitizied = strings.ReplaceAll(sanitizied, sensitiveString, "<token>")
 	}
 
 	return sanitizied
@@ -76,7 +76,7 @@ func CloneRepository(repo string, dir string) error {
 		DeleteDirectory(dir)
 	}
 
-	repoUrl := fmt.Sprintf("https://workflow-sync-bot:%s@github.com/%s.git", getToken("GH_PAT_BOT"), repo)
+	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getToken("GH_PAT_BOT"), repo)
 	if err := runCommand("git", "clone", repoUrl, dir); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
