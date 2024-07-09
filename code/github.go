@@ -80,10 +80,13 @@ func getApproverClient() *gogithub.Client {
 	return gogithub.NewClient(nil).WithAuthToken(getApproverClientToken())
 }
 
-func GetCurrentWorkflowRun(ctx context.Context, client *gogithub.Client) (*gogithub.WorkflowRun, error) {
-	owner, name := RepoOwnerName(getEnv("GO_FILE_REPO"))
+func GetCurrentWorkflowRun() (*gogithub.WorkflowRun, error) {
+	ctx := context.Background()
+	client := getClient()
 
+	owner, name := RepoOwnerName(getEnv("GO_FILE_REPO"))
 	workflowRunString := getEnv("GH_WORKFLOW_RUN_ID")
+
 	runId, err := strconv.ParseInt(workflowRunString, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert '%s' to int64: %v", workflowRunString, err)
@@ -118,7 +121,10 @@ func CloneRepository(repo string, dir string) error {
 	return nil
 }
 
-func getDefaultBranch(ctx context.Context, client *gogithub.Client, owner string, name string) (string, error) {
+func getDefaultBranch(owner string, name string) (string, error) {
+	ctx := context.Background()
+	client := getClient()
+
 	repoInfo, _, err := client.Repositories.Get(ctx, owner, name)
 	if err != nil {
 		return "", fmt.Errorf("could not get repository info from '%s/%s': %v", owner, name, err)
@@ -150,7 +156,10 @@ func ExecInDir(dir string, exec func() error) error {
 	return nil
 }
 
-func RemoteBranchExists(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) (bool, error) {
+func RemoteBranchExists(owner string, name string, branch string) (bool, error) {
+	ctx := context.Background()
+	client := getClient()
+
 	branchInfo, response, err := client.Repositories.GetBranch(ctx, owner, name, branch, 1)
 	if response.StatusCode == 404 {
 		return false, nil
@@ -215,8 +224,8 @@ func CheckoutExistingBranch(branch string) error {
 	return nil
 }
 
-func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
-	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+func DeleteBranch(owner string, name string, branch string) error {
+	defaultBranch, err := getDefaultBranch(owner, name)
 	if err != nil {
 		return err
 	}
@@ -233,7 +242,7 @@ func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, na
 		}
 	}
 
-	if exists, err := RemoteBranchExists(ctx, client, owner, name, branch); err != nil {
+	if exists, err := RemoteBranchExists(owner, name, branch); err != nil {
 		return err
 	} else if exists {
 		if err := DeleteRemoteBranch(branch); err != nil {
@@ -244,8 +253,8 @@ func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, na
 	return nil
 }
 
-func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) (bool, error) {
-	if err := DeleteBranch(ctx, client, owner, name, branch); err != nil {
+func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, error) {
+	if err := DeleteBranch(owner, name, branch); err != nil {
 		return false, fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
 	}
 
@@ -309,10 +318,13 @@ func isOk(response *gogithub.Response) bool {
 	return statusCodeString[0] != '4' && statusCodeString[0] != '5'
 }
 
-func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, branch string, title string, workflowRun *gogithub.WorkflowRun) (*gogithub.PullRequest, error) {
+func CreatePullRequest(owner string, name string, branch string, title string, workflowRun *gogithub.WorkflowRun) (*gogithub.PullRequest, error) {
+	ctx := context.Background()
+	client := getClient()
+
 	log.Println("- Creating pull request...")
 
-	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+	defaultBranch, err := getDefaultBranch(owner, name)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +347,10 @@ func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner strin
 	return pullRequest, nil
 }
 
-func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, pullRequest *gogithub.PullRequest) error {
+func ApprovePullRequest(owner string, name string, pullRequest *gogithub.PullRequest) error {
+	ctx := context.Background()
+	client := getApproverClient()
+
 	log.Println("- Approving pull request...")
 
 	_, response, err := client.PullRequests.CreateReview(ctx, owner, name, *pullRequest.Number, &gogithub.PullRequestReviewRequest{
@@ -352,7 +367,10 @@ func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner stri
 	return nil
 }
 
-func MergePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, pullRequest *gogithub.PullRequest) error {
+func MergePullRequest(owner string, name string, pullRequest *gogithub.PullRequest) error {
+	ctx := context.Background()
+	client := getClient()
+
 	log.Println("- Merging pull request...")
 
 	_, response, err := client.PullRequests.Merge(ctx, owner, name, *pullRequest.Number, "", &gogithub.PullRequestOptions{})
@@ -374,14 +392,11 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 		return nil, fmt.Errorf("could not sync locally: %w", err)
 	}
 
-	ctx := context.Background()
-	client := getClient()
-
 	featureBranch := "sync-workflows"
 	changesPushed := false
 	err := ExecInDir(repoDir, func() error {
 		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
-		success, err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch)
+		success, err := CreateAndPushToNewBranch(owner, name, featureBranch)
 		changesPushed = success
 		if err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
@@ -397,28 +412,27 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 		return nil, nil
 	}
 
-	workflowRun, err := GetCurrentWorkflowRun(ctx, client)
+	workflowRun, err := GetCurrentWorkflowRun()
 	if err != nil {
 		return nil, err
 	}
 
-	pullRequest, err := CreatePullRequest(ctx, client, owner, name, featureBranch, "(sync): update workflows", workflowRun)
+	pullRequest, err := CreatePullRequest(owner, name, featureBranch, "(sync): update workflows", workflowRun)
 	if err != nil {
 		return pullRequest, err
 	}
 
-	approverClient := getApproverClient()
-	if err := ApprovePullRequest(ctx, approverClient, owner, name, pullRequest); err != nil {
+	if err := ApprovePullRequest(owner, name, pullRequest); err != nil {
 		return pullRequest, err
 	}
 
-	if err := MergePullRequest(ctx, client, owner, name, pullRequest); err != nil {
+	if err := MergePullRequest(owner, name, pullRequest); err != nil {
 		return pullRequest, err
 	}
 
 	err = ExecInDir(repoDir, func() error {
 		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
-		if err := DeleteBranch(ctx, client, owner, name, featureBranch); err != nil {
+		if err := DeleteBranch(owner, name, featureBranch); err != nil {
 			return fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
 		}
 
