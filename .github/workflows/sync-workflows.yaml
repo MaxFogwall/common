@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "OUTPUT ${{ needs.get-repos.outputs.go-output }}"
+          echo "OUTPUT : ${{ needs.get-repos.outputs.go-output }}"
+      - run: |
+          echo "fromJSON(OUTPUT) : ${{ fromJSON(needs.get-repos.outputs.go-output) }}"
 
   sync-repos:
     needs: [ show-repos ] # TODO
