@@ -287,6 +287,8 @@ func isOk(response *gogithub.Response) bool {
 }
 
 func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, branch string, title string) (*gogithub.PullRequest, error) {
+	log.Println("- Creating pull request...")
+
 	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
 	if err != nil {
 		return nil, err
@@ -311,6 +313,8 @@ func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner strin
 }
 
 func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, pullRequest *gogithub.PullRequest) error {
+	log.Println("- Approving pull request...")
+
 	_, response, err := client.PullRequests.CreateReview(ctx, owner, name, *pullRequest.Number, &gogithub.PullRequestReviewRequest{
 		Event: gogithub.String("APPROVE"),
 	})
@@ -327,6 +331,8 @@ func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner stri
 }
 
 func MergePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, pullRequest *gogithub.PullRequest) error {
+	log.Println("- Merging pull request...")
+
 	_, response, err := client.PullRequests.Merge(ctx, owner, name, *pullRequest.Number, "", &gogithub.PullRequestOptions{})
 
 	if err != nil || !isOk(response) {
