@@ -80,11 +80,13 @@ func getApproverClient() *gogithub.Client {
 	return gogithub.NewClient(nil).WithAuthToken(getApproverClientToken())
 }
 
-func GetCurrentWorkflowRun(ctx context.Context, client *gogithub.Client, owner string, name string) (*gogithub.WorkflowRun, error) {
-	workflowRunKey := "GH_WORKFLOW_RUN_ID"
-	runId, err := strconv.ParseInt(getEnv(workflowRunKey), 10, 64)
+func GetCurrentWorkflowRun(ctx context.Context, client *gogithub.Client) (*gogithub.WorkflowRun, error) {
+	owner, name := RepoOwnerName(getEnv("GO_FILE_REPO"))
+
+	workflowRunString := getEnv("GH_WORKFLOW_RUN_ID")
+	runId, err := strconv.ParseInt(workflowRunString, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("could not convert '%s' (from ENV '%s') to int64: %v", getEnv(workflowRunKey), workflowRunKey, err)
+		return nil, fmt.Errorf("could not convert '%s' to int64: %v", workflowRunString, err)
 	}
 
 	workflowRun, response, err := client.Actions.GetWorkflowRunByID(ctx, owner, name, runId)
@@ -307,15 +309,10 @@ func isOk(response *gogithub.Response) bool {
 	return statusCodeString[0] != '4' && statusCodeString[0] != '5'
 }
 
-func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, branch string, title string) (*gogithub.PullRequest, error) {
+func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, branch string, title string, workflowRun *gogithub.WorkflowRun) (*gogithub.PullRequest, error) {
 	log.Println("- Creating pull request...")
 
 	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowRun, err := GetCurrentWorkflowRun(ctx, client, owner, name)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +397,12 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 		return nil, nil
 	}
 
-	pullRequest, err := CreatePullRequest(ctx, client, owner, name, featureBranch, "(sync): update workflows")
+	workflowRun, err := GetCurrentWorkflowRun(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	pullRequest, err := CreatePullRequest(ctx, client, owner, name, featureBranch, "(sync): update workflows", workflowRun)
 	if err != nil {
 		return pullRequest, err
 	}

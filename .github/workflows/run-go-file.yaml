@@ -36,6 +36,7 @@ jobs:
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
         env:
+          GO_FILE_REPO: "${{ inputs.go-file-repo }}"
           GH_WORKFLOW_RUN_ID: "${{ github.run_id }}"
           GH_PAT_MF: "${{ secrets.GH_PAT_MF }}"
           GH_PAT_AYYXD: "${{ secrets.GH_PAT_AYYXD }}"
