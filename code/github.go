@@ -41,20 +41,20 @@ func SetupGitHubUser(username string, email string) {
 	runCommand("git", "config", "user.email", email)
 }
 
-func getToken(tokenName string) string {
-	token := os.Getenv(tokenName)
-	if token == "" {
-		log.Fatalf("no %s provided", tokenName)
+func getEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("no '%s' provided in ENV", key)
 	}
-	return token
+	return value
 }
 
 func getClientToken() string {
-	return getToken("GH_PAT_MF")
+	return getEnv("GH_PAT_MF")
 }
 
 func getApproverClientToken() string {
-	return getToken("GH_PAT_AYYXD")
+	return getEnv("GH_PAT_AYYXD")
 }
 
 func sanitize(log string) string {
