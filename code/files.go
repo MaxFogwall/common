@@ -39,10 +39,6 @@ func ReadFile(filePath string) string {
 	return string(data)
 }
 
-func MakeSummary(contents string) bool {
-	return WriteFile("summary.md", contents)
-}
-
 func CreateDirectory(dir string) error {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return fmt.Errorf("could not create directory '%s': %w", dir, err)

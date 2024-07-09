@@ -59,7 +59,7 @@ func formatTime(syncedRepo SyncedRepository) string {
 	return syncedRepo.ElapsedTime.Round(time.Second).String()
 }
 
-func MakeSyncedReposSummary(syncedRepos []SyncedRepository) {
+func WriteSyncedReposSummary(syncedRepos []SyncedRepository) {
 	var syncedReposTable []string
 	var syncedReposErrors []string
 
@@ -122,7 +122,7 @@ func main() {
 	targetRepos := getTargetRepos()
 	syncedRepos := syncWorkflows(targetRepos)
 
-	MakeSyncedReposSummary(syncedRepos)
+	WriteSyncedReposSummary(syncedRepos)
 	if AnySyncedRepoHasError(syncedRepos) {
 		panic(errors.New("one or more repositories were not synced successfully"))
 	}
