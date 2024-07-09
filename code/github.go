@@ -178,7 +178,7 @@ func DeleteRemoteBranch(branch string) error {
 
 func CheckoutNewBranch(branch string) error {
 	if err := runCommand("git", "checkout", "-b", branch); err != nil {
-		return fmt.Errorf("could not checkout '%s': %v", branch, err)
+		return fmt.Errorf("could not checkout new branch '%s': %v", branch, err)
 	}
 
 	return nil
@@ -186,7 +186,7 @@ func CheckoutNewBranch(branch string) error {
 
 func CheckoutExistingBranch(branch string) error {
 	if err := runCommand("git", "checkout", branch); err != nil {
-		return fmt.Errorf("could not checkout '%s': %v", branch, err)
+		return fmt.Errorf("could not checkout existing branch '%s': %v", branch, err)
 	}
 
 	return nil
