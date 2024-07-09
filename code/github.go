@@ -43,7 +43,7 @@ func SetupGitHubUser(username string, email string) {
 }
 
 func UpdateJobSummary(contents string) error {
-	return ExecInDir("$HOME", func() error {
+	return ExecInDir("$GITHUB_WORKSPACE", func() error {
 		if err := runCommand("\"### test\"", ">>", "$GITHUB_STEP_SUMMARY"); err != nil {
 			return fmt.Errorf("could not update job summary: %v", err)
 		}
@@ -148,7 +148,7 @@ func ExecInDir(dir string, exec func() error) error {
 		return fmt.Errorf("could not get working directory: %v", err)
 	}
 
-	if err := os.Chdir(workingDir + "/" + dir); err != nil {
+	if err := os.Chdir(dir); err != nil {
 		return fmt.Errorf("could not change directory to '%s': %v", dir, err)
 	}
 
