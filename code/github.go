@@ -43,7 +43,7 @@ func SetupGitHubUser(username string, email string) {
 }
 
 func UpdateJobSummary(contents string) error {
-	if err := runCommand("echo ", "\"### test\"", ">>", "$GITHUB_STEP_SUMMARY"); err != nil {
+	if err := runCommand("\"### test\"", ">>", "$GITHUB_STEP_SUMMARY"); err != nil {
 		return fmt.Errorf("could not update job summary: %v", err)
 	}
 
