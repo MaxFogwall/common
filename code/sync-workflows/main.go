@@ -37,21 +37,15 @@ func formatRepo(syncedRepo SyncedRepository) string {
 }
 
 func formatSuccess(syncedRepo SyncedRepository) string {
-	pullRequestLink := ""
 	if syncedRepo.PullRequest != nil {
-		pullRequestLink = fmt.Sprintf("[#%v](%s)", *syncedRepo.PullRequest.Number, *syncedRepo.PullRequest.URL)
+		return fmt.Sprintf("- %s", *syncedRepo.PullRequest.URL)
 	}
 
-	successEmoji := "✅"
 	if syncedRepo.Error != nil {
-		successEmoji = "❌"
+		return "❌"
 	}
 
-	if pullRequestLink == "" {
-		return successEmoji
-	}
-
-	return fmt.Sprintf("%s (%s)", successEmoji, pullRequestLink)
+	return "✅"
 }
 
 func formatTime(syncedRepo SyncedRepository) string {
