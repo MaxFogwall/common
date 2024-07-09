@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 
 	gogithub "github.com/google/go-github/v62/github"
@@ -77,6 +78,25 @@ func getClient() *gogithub.Client {
 
 func getApproverClient() *gogithub.Client {
 	return gogithub.NewClient(nil).WithAuthToken(getApproverClientToken())
+}
+
+func GetCurrentWorkflowRun(ctx context.Context, client *gogithub.Client, owner string, name string) (*gogithub.WorkflowRun, error) {
+	workflowRunKey := "GH_WORKFLOW_RUN_ID"
+	runId, err := strconv.ParseInt(getEnv(workflowRunKey), 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert '%s' (from ENV '%s') to int64: %v", getEnv(workflowRunKey), workflowRunKey, err)
+	}
+
+	workflowRun, response, err := client.Actions.GetWorkflowRunByID(ctx, owner, name, runId)
+	if err != nil || !isOk(response) {
+		format := "could not get workflow run #%v: %v"
+		if err != nil {
+			return nil, fmt.Errorf(format, runId, err)
+		}
+		return nil, fmt.Errorf(format, runId, response.Body)
+	}
+
+	return workflowRun, nil
 }
 
 func CloneRepository(repo string, dir string) error {
