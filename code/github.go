@@ -136,6 +136,7 @@ func RemoteBranchExists(ctx context.Context, client *gogithub.Client, owner stri
 	if err != nil {
 		return false, fmt.Errorf("could not get remote branch info from '%s/%s@%s': %v", owner, name, branch, err)
 	}
+
 	return branchInfo != nil, nil
 }
 
@@ -300,7 +301,6 @@ func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner strin
 		Base:                gogithub.String(defaultBranch),
 		MaintainerCanModify: gogithub.Bool(true),
 	})
-
 	if err != nil || !isOk(response) {
 		format := "could not create pull request from '%s' to '%s': %v"
 		if err != nil {
@@ -318,7 +318,6 @@ func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner stri
 	_, response, err := client.PullRequests.CreateReview(ctx, owner, name, *pullRequest.Number, &gogithub.PullRequestReviewRequest{
 		Event: gogithub.String("APPROVE"),
 	})
-
 	if err != nil || !isOk(response) {
 		format := "could not approve pull request #%v: %v"
 		if err != nil {
@@ -334,7 +333,6 @@ func MergePullRequest(ctx context.Context, client *gogithub.Client, owner string
 	log.Println("- Merging pull request...")
 
 	_, response, err := client.PullRequests.Merge(ctx, owner, name, *pullRequest.Number, "", &gogithub.PullRequestOptions{})
-
 	if err != nil || !isOk(response) {
 		format := "could not merge pull request #%v: %v"
 		if err != nil {
