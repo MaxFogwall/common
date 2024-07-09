@@ -37,7 +37,8 @@ jobs:
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
         env:
-          GH_AUTH_TOKEN: "${{ secrets.GH_AUTH_TOKEN }}"
+          GH_PAT_BOT: "${{ secrets.GH_PAT_BOT }}"
+          GH_PAT_BOT_APPROVER: "${{ secrets.GH_PAT_BOT_APPROVER }}"
         run: |
           cd repository  # Necessary so that the go.mod file can be found.
           go run ${{ inputs.go-file-path }}
