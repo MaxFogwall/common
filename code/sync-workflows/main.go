@@ -45,15 +45,14 @@ func formatSuccess(syncedRepo SyncedRepository) string {
 }
 
 func formatPullRequest(syncedRepo SyncedRepository) string {
+	pullRequestString := "No changes needed."
 	if syncedRepo.PullRequest != nil {
-		return fmt.Sprintf("<ul><li>%s</li></ul>", *syncedRepo.PullRequest.HTMLURL)
+		pullRequestString = *syncedRepo.PullRequest.HTMLURL
+	} else if syncedRepo.Error != nil {
+		pullRequestString = "Could not create."
 	}
 
-	if syncedRepo.Error != nil {
-		return "Could not create."
-	}
-
-	return "No changes needed."
+	return fmt.Sprintf("<ul><li>%s</li></ul>", pullRequestString)
 }
 
 func formatTime(syncedRepo SyncedRepository) string {
