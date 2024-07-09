@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -113,5 +114,12 @@ func CopySpecificFiles(sourceDir string, targetDir string, shouldCopy func(os.Fi
 }
 
 func WriteOutput(output string) bool {
-	return WriteFile("go-output.txt", output)
+	err := ExecInDir(getEnv("$GITHUB_WORKSPACE"), func() error {
+		WriteFile("go-output.txt", output)
+
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("could not write `go-output.txt`: %v", err)
+	}
 }
