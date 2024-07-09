@@ -19,12 +19,18 @@ on:
         type: 'string'
         default: ''
         description: 'A space-separated list of string arguments passed to the Go file (e.g. "component-1").'
+    outputs:
+      go-output:
+        value: ${{ jobs.run-go-file.outputs.go-output }}
+        description: 'The output of the Go code (e.g. "success").'
 
 jobs:
   run-go-file:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      go-output: ${{ steps.set-output.outputs.go-output }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository ("${{ inputs.go-file-repo }}")
@@ -47,3 +53,10 @@ jobs:
         run: |
           cd repository  # Necessary so that the go.mod file can be found.
           go run ${{ inputs.go-file-path }} ${{ inputs.go-args }}
+      
+      - name: Set Output
+        id: set-output
+        run: |
+          if [ -r go-output.txt ] then
+            echo "go-output=$(cat go-output.txt)" >> $GITHUB_OUTPUT
+          fi
