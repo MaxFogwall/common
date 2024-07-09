@@ -336,7 +336,9 @@ func SyncRepository(repo string) error {
 		return err
 	}
 
-	// TODO: Delete feature branch.
+	if err := DeleteBranch(ctx, client, owner, name, featureBranch); err != nil {
+		return fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
+	}
 
 	return nil
 }
