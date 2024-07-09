@@ -285,6 +285,20 @@ func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner stri
 	return nil
 }
 
+func MergePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, pullRequest *gogithub.PullRequest) error {
+	_, response, err := client.PullRequests.Merge(ctx, owner, name, *pullRequest.Number, "", &gogithub.PullRequestOptions{})
+
+	if err != nil || !isOk(response) {
+		format := "could not merge pull request #%v: %v"
+		if err != nil {
+			return fmt.Errorf(format, *pullRequest.Number, err)
+		}
+		return fmt.Errorf(format, *pullRequest.Number, response.Body)
+	}
+
+	return nil
+}
+
 func SyncRepository(repo string) error {
 	owner, name := RepoOwnerName(repo)
 	repoDir := name
@@ -318,7 +332,10 @@ func SyncRepository(repo string) error {
 		return err
 	}
 
-	// TODO: Merge pull request.
+	if err := MergePullRequest(ctx, client, owner, name, pullRequest); err != nil {
+		return err
+	}
+
 	// TODO: Delete feature branch.
 
 	return nil
