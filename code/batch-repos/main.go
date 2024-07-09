@@ -70,7 +70,7 @@ func main() {
 		log.Fatalf("could not convert repo batches to JSON")
 	}
 
-	repoBatchesJsonString := fmt.Sprintf("{%s}", string(repoBatchesJson))
+	repoBatchesJsonString := fmt.Sprintf("{\"batches\": %s}", string(repoBatchesJson))
 	fmt.Printf("converted repo batches to JSON: \"%s\"", repoBatchesJsonString)
 	common.WriteOutput(repoBatchesJsonString)
 }
