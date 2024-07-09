@@ -50,7 +50,7 @@ func getToken(tokenName string) string {
 }
 
 func getClientToken() string {
-	return getToken("GH_PAT_ORG")
+	return getToken("GH_PAT_MF")
 }
 
 func getApproverClientToken() string {
