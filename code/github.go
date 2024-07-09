@@ -336,8 +336,16 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 		return pullRequest, err
 	}
 
-	if err := DeleteBranch(ctx, client, owner, name, featureBranch); err != nil {
-		return pullRequest, fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
+	err = ExecInDir(repoDir, func() error {
+		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
+		if err := DeleteBranch(ctx, client, owner, name, featureBranch); err != nil {
+			return fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return pullRequest, err
 	}
 
 	return pullRequest, nil
