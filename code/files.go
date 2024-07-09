@@ -113,7 +113,7 @@ func CopySpecificFiles(sourceDir string, targetDir string, shouldCopy func(os.Fi
 	return nil
 }
 
-func WriteOutput(output string) bool {
+func WriteOutput(output string) {
 	err := ExecInDir(getEnv("$GITHUB_WORKSPACE"), func() error {
 		WriteFile("go-output.txt", output)
 
