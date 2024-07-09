@@ -199,35 +199,35 @@ func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, na
 	return nil
 }
 
-func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) error {
+func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owner string, name string, branch string) (bool, error) {
 	if err := DeleteBranch(ctx, client, owner, name, branch); err != nil {
-		return fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
+		return false, fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
 	}
 
 	if err := runCommand("git", "checkout", "-b", branch); err != nil {
-		return fmt.Errorf("could not checkout '%s': %v", branch, err)
+		return false, fmt.Errorf("could not checkout '%s': %v", branch, err)
 	}
 
 	if err := runCommand("git", "add", ".github/workflows"); err != nil {
-		return fmt.Errorf("could not add workflows: %v", err)
+		return false, fmt.Errorf("could not add workflows: %v", err)
 	}
 
 	if clean, err := IsWorkingTreeClean(); err != nil {
-		return err
+		return false, err
 	} else if clean {
 		log.Println("No changes to commit, we are up to date!")
-		return nil
+		return false, nil
 	}
 
 	if err := runCommand("git", "commit", "-m", "sync workflows"); err != nil {
-		return fmt.Errorf("could not commit changes: %v", err)
+		return false, fmt.Errorf("could not commit changes: %v", err)
 	}
 
 	if err := runCommand("git", "push", "-u", "origin", branch); err != nil {
-		return fmt.Errorf("could not push to remote '%s': %v", branch, err)
+		return false, fmt.Errorf("could not push to remote '%s': %v", branch, err)
 	}
 
-	return nil
+	return true, nil
 }
 
 func locallySync(targetRepo string, targetRepoDir string) error {
@@ -329,9 +329,12 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 	client := getClient()
 
 	featureBranch := "sync-workflows"
+	changesPushed := false
 	err := ExecInDir(repoDir, func() error {
 		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
-		if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
+		success, err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch)
+		changesPushed = success
+		if err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
 		}
 
@@ -339,6 +342,10 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if !changesPushed {
+		// There were no changes, so we have nothing to make a pull request of.
+		return nil, nil
 	}
 
 	pullRequest, err := CreatePullRequest(ctx, client, owner, name, featureBranch, "(sync): update workflows")
