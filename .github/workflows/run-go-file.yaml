@@ -16,12 +16,11 @@ on:
         required: true
         description: 'The file path to the Go file (e.g. "code/code-1.go").'
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   run-go-file:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository ("${{ inputs.go-file-repo }}")
