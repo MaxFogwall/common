@@ -37,15 +37,23 @@ func formatRepo(syncedRepo SyncedRepository) string {
 }
 
 func formatSuccess(syncedRepo SyncedRepository) string {
-	if syncedRepo.PullRequest != nil {
-		return fmt.Sprintf("- %s", *syncedRepo.PullRequest.URL)
-	}
-
 	if syncedRepo.Error != nil {
 		return "❌"
 	}
 
 	return "✅"
+}
+
+func formatPullRequest(syncedRepo SyncedRepository) string {
+	if syncedRepo.PullRequest != nil {
+		return fmt.Sprintf("<ul><li>%s</li></ul>", *syncedRepo.PullRequest.HTMLURL)
+	}
+
+	if syncedRepo.Error != nil {
+		return "Could not create."
+	}
+
+	return "No changes needed."
 }
 
 func formatTime(syncedRepo SyncedRepository) string {
@@ -56,15 +64,15 @@ func MakeSyncedReposSummary(syncedRepos []SyncedRepository) {
 	var syncedReposTable []string
 	var syncedReposErrors []string
 
-	syncedReposTable = append(syncedReposTable, "| Repository | Success | T-Start |")
-	syncedReposTable = append(syncedReposTable, "|:-|:-:|-:|")
+	syncedReposTable = append(syncedReposTable, "| Repository | Success | Pull Request | T-Start |")
+	syncedReposTable = append(syncedReposTable, "|:-|:-:|:-|-:|")
 
 	for _, syncedRepo := range syncedRepos {
 		if syncedRepo.Error != nil {
 			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", formatRepo(syncedRepo), syncedRepo.Error))
 		}
 
-		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |", formatRepo(syncedRepo), formatSuccess(syncedRepo), formatTime(syncedRepo)))
+		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s | %s |", formatRepo(syncedRepo), formatSuccess(syncedRepo), formatPullRequest(syncedRepo), formatTime(syncedRepo)))
 	}
 
 	var summaryLines []string
