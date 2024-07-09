@@ -71,5 +71,5 @@ func main() {
 	}
 
 	fmt.Printf("converted repo batches to JSON: \"%s\"", string(repoBatchesJson))
-	common.WriteFile("repo-batches.json", string(repoBatchesJson))
+	common.WriteFile("output.txt", string(repoBatchesJson))
 }
