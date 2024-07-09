@@ -315,10 +315,16 @@ func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner strin
 		return nil, err
 	}
 
+	workflowRun, err := GetCurrentWorkflowRun(ctx, client, owner, name)
+	if err != nil {
+		return nil, err
+	}
+
 	pullRequest, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
 		Title:               gogithub.String(title),
 		Head:                gogithub.String(branch),
 		Base:                gogithub.String(defaultBranch),
+		Body:                gogithub.String(fmt.Sprintf("*Automatically generated from [workflow run %s](%s) in [%s](%s).*", *workflowRun.Name, *workflowRun.HTMLURL, *workflowRun.Repository.FullName, *workflowRun.Repository.HTMLURL)),
 		MaintainerCanModify: gogithub.Bool(true),
 	})
 	if err != nil || !isOk(response) {
