@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - run: |
-          echo "REPOS_JSON<<EOF"$'\n'"${cat repos.json}"$'\n'EOF >> $GITHUB_ENV
+          echo "REPOS_JSON<<EOF"$'\n'"$(cat repos.json)"$'\n'EOF >> $GITHUB_ENV
       
       - id: matrix
         run: |
