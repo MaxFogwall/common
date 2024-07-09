@@ -176,8 +176,16 @@ func DeleteRemoteBranch(branch string) error {
 	return nil
 }
 
-func CheckoutBranch(branch string) error {
+func CheckoutNewBranch(branch string) error {
 	if err := runCommand("git", "checkout", "-b", branch); err != nil {
+		return fmt.Errorf("could not checkout '%s': %v", branch, err)
+	}
+
+	return nil
+}
+
+func CheckoutExistingBranch(branch string) error {
+	if err := runCommand("git", "checkout", branch); err != nil {
 		return fmt.Errorf("could not checkout '%s': %v", branch, err)
 	}
 
@@ -190,7 +198,7 @@ func DeleteBranch(ctx context.Context, client *gogithub.Client, owner string, na
 		return err
 	}
 
-	if err := CheckoutBranch(defaultBranch); err != nil {
+	if err := CheckoutExistingBranch(defaultBranch); err != nil {
 		return err
 	}
 
@@ -218,7 +226,7 @@ func CreateAndPushToNewBranch(ctx context.Context, client *gogithub.Client, owne
 		return false, fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
 	}
 
-	if err := CheckoutBranch(branch); err != nil {
+	if err := CheckoutNewBranch(branch); err != nil {
 		return false, err
 	}
 
