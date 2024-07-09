@@ -59,4 +59,5 @@ jobs:
         run: |
           if [ -r go-output.txt ]; then
             echo "go-output=$(cat go-output.txt)" >> $GITHUB_OUTPUT
+            echo "$(cat go-output.txt)"
           fi
