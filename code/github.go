@@ -42,6 +42,14 @@ func SetupGitHubUser(username string, email string) {
 	runCommand("git", "config", "user.email", email)
 }
 
+func UpdateJobSummary(contents string) error {
+	if err := runCommand("echo ", "### test", ">>", "$GITHUB_STEP_SUMMARY"); err != nil {
+		return fmt.Errorf("could not update job summary: %v", err)
+	}
+
+	return nil
+}
+
 func getEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {

@@ -82,7 +82,7 @@ func MakeSyncedReposSummary(syncedRepos []SyncedRepository) {
 		summaryLines = append(summaryLines, strings.Join(syncedReposErrors, "\r\n"))
 	}
 
-	common.MakeSummary(strings.Join(summaryLines, "\r\n"))
+	common.UpdateJobSummary(strings.Join(summaryLines, "\r\n"))
 }
 
 func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
