@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/synced_**.yaml'
       - '.github/workflows/synced_**.yml'
+      - 'repos.json'
   workflow_dispatch:
 
 jobs:
