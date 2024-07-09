@@ -15,6 +15,10 @@ on:
         type: 'string'
         required: true
         description: 'The file path to the Go file (e.g. "code/code-1.go").'
+      go-args:
+        type: 'string'
+        default: ''
+        description: 'A space-separated list of string arguments passed to the Go file (e.g. "component-1").'
 
 jobs:
   run-go-file:
@@ -42,4 +46,4 @@ jobs:
           GH_PAT_AYYXD: "${{ secrets.GH_PAT_AYYXD }}"
         run: |
           cd repository  # Necessary so that the go.mod file can be found.
-          go run ${{ inputs.go-file-path }}
+          go run ${{ inputs.go-file-path }} ${{ inputs.go-args }}

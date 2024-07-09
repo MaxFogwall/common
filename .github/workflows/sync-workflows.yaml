@@ -9,11 +9,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-sync-workflows:
+  get-repos:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.repos }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: |
+          echo 'REPOS_JSON<<EOF' >> $GITHUB_ENV
+          cat ./repos.json >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+      
+      - id: matrix
+        run: |
+          echo "repos=${{ fromJSON(env.REPOS_JSON) }}" >> $GITHUB_OUTPUT
+      
+      - run: |
+          echo "${{ steps.matrix.outputs.repos }}"
+
+  sync-repos:
+    needs: [ get-repos ]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+    strategy:
+      matrix:
+        target: ${{ fromJSON(needs.setup.outputs.matrix) }}
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
-      go-file-path: 'code/sync-workflows/main.go'
+      go-file-path: 'code/sync-workflow/main.go'
+      go-args: ${{ matrix.target }}
     secrets: inherit
