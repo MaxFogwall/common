@@ -8,15 +8,12 @@ on:
       - 'repos.json'
   workflow_dispatch:
 
-env:
-  BATCH_SIZE: 2
-
 jobs:
   get-repos:
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/batch-repos/main.go'
-      go-args: ${{ env.BATCH_SIZE }}
+      go-args: 2
 
   sync-repos:
     needs: [ get-repos ]
