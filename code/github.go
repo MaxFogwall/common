@@ -299,11 +299,11 @@ func MergePullRequest(ctx context.Context, client *gogithub.Client, owner string
 	return nil
 }
 
-func SyncRepository(repo string) error {
+func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 	owner, name := RepoOwnerName(repo)
 	repoDir := name
 	if err := locallySync(repo, repoDir); err != nil {
-		return fmt.Errorf("could not sync locally: %w", err)
+		return nil, fmt.Errorf("could not sync locally: %w", err)
 	}
 
 	ctx := context.Background()
@@ -319,26 +319,26 @@ func SyncRepository(repo string) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	pullRequest, err := CreatePullRequest(ctx, client, owner, name, featureBranch, "(sync): update workflows")
 	if err != nil {
-		return err
+		return pullRequest, err
 	}
 
 	approverClient := getApproverClient()
 	if err := ApprovePullRequest(ctx, approverClient, owner, name, pullRequest); err != nil {
-		return err
+		return pullRequest, err
 	}
 
 	if err := MergePullRequest(ctx, client, owner, name, pullRequest); err != nil {
-		return err
+		return pullRequest, err
 	}
 
 	if err := DeleteBranch(ctx, client, owner, name, featureBranch); err != nil {
-		return fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
+		return pullRequest, fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
 	}
 
-	return nil
+	return pullRequest, nil
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	gogithub "github.com/google/go-github/v62/github"
 	common "github.com/workflow-sync-poc/common/code"
 )
 
@@ -15,6 +16,7 @@ type SyncedRepository struct {
 	Identifier  string
 	Error       error
 	ElapsedTime time.Duration
+	PullRequest *gogithub.PullRequest
 }
 
 func getTargetRepos() []string {
@@ -35,11 +37,21 @@ func formatRepo(syncedRepo SyncedRepository) string {
 }
 
 func formatSuccess(syncedRepo SyncedRepository) string {
-	if syncedRepo.Error != nil {
-		return "❌"
+	pullRequestLink := ""
+	if syncedRepo.PullRequest != nil {
+		pullRequestLink = fmt.Sprintf("[#%v](%s)", *syncedRepo.PullRequest.Number, *syncedRepo.PullRequest.URL)
 	}
 
-	return "✅"
+	successEmoji := "✅"
+	if syncedRepo.Error != nil {
+		successEmoji = "❌"
+	}
+
+	if pullRequestLink == "" {
+		return successEmoji
+	}
+
+	return fmt.Sprintf("%s (%s)", successEmoji, pullRequestLink)
 }
 
 func formatTime(syncedRepo SyncedRepository) string {
@@ -87,7 +99,7 @@ func syncWorkflows(repos []string) []SyncedRepository {
 	syncedRepos := []SyncedRepository{}
 
 	for _, repo := range repos {
-		err := common.SyncRepository(repo)
+		pullRequest, err := common.SyncRepository(repo)
 		if err != nil {
 			log.Printf("Failed to sync to '%s': %v\n", repo, err)
 		}
@@ -96,6 +108,7 @@ func syncWorkflows(repos []string) []SyncedRepository {
 			Identifier:  repo,
 			Error:       err,
 			ElapsedTime: time.Since(startTime),
+			PullRequest: pullRequest,
 		}
 
 		syncedRepos = append(syncedRepos, syncedRepository)
