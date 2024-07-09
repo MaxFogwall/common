@@ -140,15 +140,12 @@ func RemoteBranchExists(ctx context.Context, client *gogithub.Client, owner stri
 }
 
 func IsWorkingTreeClean() (bool, error) {
-	_, err := runAndOutputCommand("git", "diff", "--exit-code")
+	out, err := runAndOutputCommand("git", "status", "--porcelain")
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return exitErr.Success(), nil
-		}
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
 
-	return true, nil
+	return string(out) != "", nil
 }
 
 func LocalBranchExists(branch string) (bool, error) {
