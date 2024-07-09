@@ -145,7 +145,7 @@ func IsWorkingTreeClean() (bool, error) {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
 
-	return string(out) != "", nil
+	return string(out) == "", nil
 }
 
 func LocalBranchExists(branch string) (bool, error) {
