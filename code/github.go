@@ -50,6 +50,11 @@ func RepoOwnerName(repo string) (string, string) {
 	return ownerNameSlice[0], ownerNameSlice[1]
 }
 
+func SetupGitHubUser(username string, email string) {
+	runCommand("git", "config", "user.name", username)
+	runCommand("git", "config", "user.email", email)
+}
+
 func getToken(tokenName string) string {
 	token := os.Getenv(tokenName)
 	if token == "" {
@@ -284,6 +289,7 @@ func SyncRepository(repo string) error {
 
 	featureBranch := "sync-workflows"
 	err := ExecInDir(repoDir, func() error {
+		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
 		if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
 		}
