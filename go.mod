@@ -1,4 +1,4 @@
-module github.com/MaxFogwall/common
+module github.com/workflow-sync-poc/common
 
 go 1.22.5
 

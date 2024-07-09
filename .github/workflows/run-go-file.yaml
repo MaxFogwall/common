@@ -5,8 +5,8 @@ on:
     inputs:
       go-file-repo:
         type: 'string'
-        default: 'MaxFogwall/common'
-        description: 'The repository with the Go file. By default "MaxFogwall/common".'
+        default: 'workflow-sync-poc/common'
+        description: 'The repository with the Go file. By default "workflow-sync-poc/common".'
       go-version:
         type: 'string'
         default: 'stable'

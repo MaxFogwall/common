@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/MaxFogwall/common/code"
+	common "github.com/workflow-sync-poc/common/code"
 )
 
 type SyncedRepository struct {

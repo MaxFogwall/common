@@ -1,4 +1,4 @@
-# This file is synced from `MaxFogwall/common`.
+# This file is synced from `workflow-sync-poc/common`.
 
 name: Run `code-1.go`
 
@@ -7,6 +7,6 @@ on:
 
 jobs:
   run-code-1:
-    uses: 'MaxFogwall/common/.github/workflows/run-go-file.yaml@main'
+    uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/code-1/main.go'
