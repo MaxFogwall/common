@@ -43,14 +43,3 @@ jobs:
         run: |
           cd repository  # Necessary so that the go.mod file can be found.
           go run ${{ inputs.go-file-path }}
-      
-      - name: Check For Job Summary
-        if: always()
-        run: |
-          cd repository
-          if test -f summary.md; then
-            echo "Job summary file found! Sending to GITHUB_STEP_SUMMARY."
-            echo $(cat summary.md) >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No job summary file found."
-          fi
