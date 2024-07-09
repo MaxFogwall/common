@@ -30,7 +30,6 @@ jobs:
 
   sync-repos:
     needs: [ get-repos ]
-    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
