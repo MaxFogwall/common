@@ -50,7 +50,7 @@ func getToken(tokenName string) string {
 }
 
 func getClientToken() string {
-	return getToken("GH_PAT_MF")
+	return getToken("GITHUB_TOKEN")
 }
 
 func getApproverClientToken() string {
@@ -297,7 +297,7 @@ func SyncRepository(repo string) error {
 
 	featureBranch := "sync-workflows"
 	err := ExecInDir(repoDir, func() error {
-		SetupGitHubUser("workflow-sync-prototype", "max.fogwa.ll@gmail.com")
+		SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
 		if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
 		}

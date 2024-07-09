@@ -37,6 +37,7 @@ jobs:
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
         env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GH_PAT_MF: "${{ secrets.GH_PAT_MF }}"
           GH_PAT_AYYXD: "${{ secrets.GH_PAT_AYYXD }}"
         run: |
