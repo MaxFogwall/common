@@ -14,7 +14,17 @@ import (
 )
 
 func sanitize(log string) string {
-	return strings.ReplaceAll(log, getToken(), "<token>")
+	sanitizied := log
+	sensitiveStrings := []string{
+		getToken("GH_PAT_BOT"),
+		getToken("GH_PAT_BOT_APPROVER"),
+	}
+
+	for _, sensitiveString := range sensitiveStrings {
+		sanitizied = strings.ReplaceAll(sanitizied, sensitiveString, "***")
+	}
+
+	return sanitizied
 }
 
 func runCommand(name string, args ...string) error {
@@ -40,21 +50,20 @@ func RepoOwnerName(repo string) (string, string) {
 	return ownerNameSlice[0], ownerNameSlice[1]
 }
 
-func SetupGitHubUser(username string, email string) {
-	runCommand("git", "config", "--global", "user.name", username)
-	runCommand("git", "config", "--global", "user.email", email)
-}
-
-func getToken() string {
-	token := os.Getenv("GH_AUTH_TOKEN")
+func getToken(tokenName string) string {
+	token := os.Getenv(tokenName)
 	if token == "" {
-		log.Fatal("no GH_AUTH_TOKEN provided")
+		log.Fatalf("no %s provided", tokenName)
 	}
 	return token
 }
 
 func getClient() *gogithub.Client {
-	return gogithub.NewClient(nil).WithAuthToken(getToken())
+	return gogithub.NewClient(nil).WithAuthToken(getToken("GH_PAT_BOT"))
+}
+
+func getApproverClient() *gogithub.Client {
+	return gogithub.NewClient(nil).WithAuthToken(getToken("GH_PAT_BOT_APPROVER"))
 }
 
 func CloneRepository(repo string, dir string) error {
@@ -62,7 +71,7 @@ func CloneRepository(repo string, dir string) error {
 		DeleteDirectory(dir)
 	}
 
-	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getToken(), repo)
+	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getToken("GH_PAT_BOT"), repo)
 	if err := runCommand("git", "clone", repoUrl, dir); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
@@ -223,16 +232,47 @@ func isOk(response *gogithub.Response) bool {
 	return statusCodeString[0] != '4' && statusCodeString[0] != '5'
 }
 
-func SyncRepository(targetRepo string) error {
-	targetRepoDir := "TargetRepo"
-	if err := locallySync(targetRepo, targetRepoDir); err != nil {
-		return fmt.Errorf("could not sync locally: %w", err)
+func CreatePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, branch string, title string) (*gogithub.PullRequest, error) {
+	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+	if err != nil {
+		return nil, err
 	}
 
-	owner, name := RepoOwnerName(targetRepo)
-	ctx := context.Background()
-	client := getClient()
+	pullRequest, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
+		Title:               gogithub.String(title),
+		Head:                gogithub.String(branch),
+		Base:                gogithub.String(defaultBranch),
+		MaintainerCanModify: gogithub.Bool(true),
+	})
 
+	if err != nil || !isOk(response) {
+		format := "could not create pull request from '%s' to '%s': %v"
+		if err != nil {
+			return pullRequest, fmt.Errorf(format, branch, defaultBranch, err)
+		}
+		return pullRequest, fmt.Errorf(format, branch, defaultBranch, response.Body)
+	}
+
+	return pullRequest, nil
+}
+
+func ApprovePullRequest(ctx context.Context, client *gogithub.Client, owner string, name string, pullRequest *gogithub.PullRequest) error {
+	_, response, err := client.PullRequests.CreateReview(ctx, owner, name, *pullRequest.Number, &gogithub.PullRequestReviewRequest{
+		Event: gogithub.String("APPROVE"),
+	})
+
+	if err != nil || !isOk(response) {
+		format := "could not approve pull request #%v: %v"
+		if err != nil {
+			return fmt.Errorf(format, *pullRequest.Number, err)
+		}
+		return fmt.Errorf(format, *pullRequest.Number, response.Body)
+	}
+
+	return nil
+}
+
+func AllowWorkflowRepoWrites(ctx context.Context, client *gogithub.Client, owner string, name string) error {
 	_, response, err := client.Repositories.EditDefaultWorkflowPermissions(ctx, owner, name, gogithub.DefaultWorkflowPermissionRepository{
 		DefaultWorkflowPermissions:   gogithub.String("write"),
 		CanApprovePullRequestReviews: gogithub.Bool(true),
@@ -246,54 +286,45 @@ func SyncRepository(targetRepo string) error {
 		return fmt.Errorf(format, owner, name, response.Body)
 	}
 
-	featureBranch := "sync-workflows"
-	defaultBranch, err := getDefaultBranch(ctx, client, owner, name)
+	return nil
+}
 
-	if err != nil {
+func SyncRepository(repo string) error {
+	owner, name := RepoOwnerName(repo)
+	repoDir := name
+	if err := locallySync(repo, repoDir); err != nil {
+		return fmt.Errorf("could not sync locally: %w", err)
+	}
+
+	ctx := context.Background()
+	client := getClient()
+
+	if err := AllowWorkflowRepoWrites(ctx, client, owner, name); err != nil {
 		return err
 	}
 
-	err = ExecInDir(targetRepoDir, func() error {
+	featureBranch := "sync-workflows"
+	err := ExecInDir(repoDir, func() error {
 		if err := CreateAndPushToNewBranch(ctx, client, owner, name, featureBranch); err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
 
-	pullRequest, response, err := client.PullRequests.Create(ctx, owner, name, &gogithub.NewPullRequest{
-		Title:               gogithub.String("(sync): update workflows"),
-		Head:                gogithub.String(featureBranch),
-		Base:                gogithub.String(defaultBranch),
-		Body:                gogithub.String("TODO: Link workflow run"),
-		MaintainerCanModify: gogithub.Bool(true),
-	})
-
-	if err != nil || !isOk(response) {
-		format := "could not create pull request from '%s' to '%s': %v"
-		if err != nil {
-			return fmt.Errorf(format, featureBranch, defaultBranch, err)
-		}
-		return fmt.Errorf(format, featureBranch, defaultBranch, response.Body)
+	pullRequest, err := CreatePullRequest(ctx, client, owner, name, featureBranch, "(sync): update workflows")
+	if err != nil {
+		return err
 	}
 
-	_, response, err = client.PullRequests.CreateReview(ctx, owner, name, *pullRequest.Number, &gogithub.PullRequestReviewRequest{
-		Event: gogithub.String("APPROVE"),
-	})
-
-	if err != nil || !isOk(response) {
-		format := "could not approve pull request #%v: %v"
-		if err != nil {
-			return fmt.Errorf(format, *pullRequest.Number, err)
-		}
-		return fmt.Errorf(format, *pullRequest.Number, response.Body)
+	approverClient := getApproverClient()
+	if err := ApprovePullRequest(ctx, approverClient, owner, name, pullRequest); err != nil {
+		return err
 	}
 
-	// TODO: Approve pull request.
 	// TODO: Merge pull request.
 	// TODO: Delete feature branch.
 

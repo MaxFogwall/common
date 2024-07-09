@@ -11,9 +11,13 @@ import (
 	common "github.com/MaxFogwall/common/code"
 )
 
-func main() {
-	common.SetupGitHubUser("workflow-sync-bot", "workflow-sync.bot@example.com")
+type SyncedRepository struct {
+	Identifier  string
+	Error       error
+	ElapsedTime time.Duration
+}
 
+func getTargetRepos() []string {
 	data := []byte(common.ReadFile("repos.json"))
 
 	var repos []string
@@ -22,48 +26,60 @@ func main() {
 		panic(err)
 	}
 
-	syncedRepos := syncWorkflows(repos)
+	return repos
+}
+
+func formatRepo(syncedRepo SyncedRepository) string {
+	_, name := common.RepoOwnerName(syncedRepo.Identifier)
+	return fmt.Sprintf("**[`%s`](https://github.com/%s)**", name, syncedRepo.Identifier)
+}
+
+func formatSuccess(syncedRepo SyncedRepository) string {
+	if syncedRepo.Error != nil {
+		return "❌"
+	}
+
+	return "✅"
+}
+
+func formatTime(syncedRepo SyncedRepository) string {
+	return syncedRepo.ElapsedTime.Round(time.Second).String()
+}
+
+func MakeSyncedReposSummary(syncedRepos []SyncedRepository) {
 	var syncedReposTable []string
+	var syncedReposErrors []string
+
 	syncedReposTable = append(syncedReposTable, "| Repository | Success | T-Start |")
 	syncedReposTable = append(syncedReposTable, "|:-|:-:|-:|")
 
-	var syncedReposErrors []string
-	anyRepoHadErrors := false
-
 	for _, syncedRepo := range syncedRepos {
-		_, name := common.RepoOwnerName(syncedRepo.Identifier)
-		repoString := fmt.Sprintf("**[`%s`](https://github.com/%s)**", name, syncedRepo.Identifier)
-
-		successString := "✅"
 		if syncedRepo.Error != nil {
-			successString = "❌"
-			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", repoString, syncedRepo.Error))
-			anyRepoHadErrors = true
+			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", formatRepo(syncedRepo), syncedRepo.Error))
 		}
 
-		timeString := syncedRepo.ElapsedTime.Round(time.Second).String()
-
-		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |", repoString, successString, timeString))
+		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s |", formatRepo(syncedRepo), formatSuccess(syncedRepo), formatTime(syncedRepo)))
 	}
 
 	var summaryLines []string
 	summaryLines = append(summaryLines, "### Overview")
 	summaryLines = append(summaryLines, strings.Join(syncedReposTable, "\r\n"))
-	if anyRepoHadErrors {
+	if len(syncedReposErrors) > 0 {
 		summaryLines = append(summaryLines, "### Errors")
 		summaryLines = append(summaryLines, strings.Join(syncedReposErrors, "\r\n"))
 	}
-	common.MakeSummary(strings.Join(summaryLines, "\r\n"))
 
-	if anyRepoHadErrors {
-		panic(errors.New("one or more repositories were not synced successfully"))
-	}
+	common.MakeSummary(strings.Join(summaryLines, "\r\n"))
 }
 
-type SyncedRepository struct {
-	Identifier  string
-	Error       error
-	ElapsedTime time.Duration
+func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
+	for _, syncedRepo := range syncedRepos {
+		if syncedRepo.Error != nil {
+			return true
+		}
+	}
+
+	return false
 }
 
 func syncWorkflows(repos []string) []SyncedRepository {
@@ -76,15 +92,24 @@ func syncWorkflows(repos []string) []SyncedRepository {
 			log.Printf("Failed to sync to '%s': %v\n", repo, err)
 		}
 
-		elapsedTime := time.Since(startTime)
 		syncedRepository := SyncedRepository{
 			Identifier:  repo,
 			Error:       err,
-			ElapsedTime: elapsedTime,
+			ElapsedTime: time.Since(startTime),
 		}
 
 		syncedRepos = append(syncedRepos, syncedRepository)
 	}
 
 	return syncedRepos
+}
+
+func main() {
+	targetRepos := getTargetRepos()
+	syncedRepos := syncWorkflows(targetRepos)
+
+	MakeSyncedReposSummary(syncedRepos)
+	if AnySyncedRepoHasError(syncedRepos) {
+		panic(errors.New("one or more repositories were not synced successfully"))
+	}
 }
