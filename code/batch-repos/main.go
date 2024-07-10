@@ -23,13 +23,23 @@ func getRepos() []string {
 	return repos
 }
 
-func appendBatchAsJsonString(batch []string, batches []string) ([]string, []string) {
+type Batches struct {
+	Batches []Batch `json:"batches"`
+}
+
+type Batch struct {
+	Repos  []string `json:"repos"`
+	Number int      `json:"number"`
+}
+
+func appendBatchAsJsonString(batch []string, batches []string, batchNumber int) ([]string, []string) {
+
 	batchJson, err := json.Marshal(batch)
 	if err != nil {
 		log.Fatalf("could not convert batch '%v' to JSON: %v", batch, err)
 	}
 
-	batches = append(batches, string(batchJson))
+	batches = append(batches, fmt.Sprintf("{\"repos\": %s, \"number\": %v}", string(batchJson), batchNumber))
 	batch = []string{}
 
 	return batch, batches
@@ -47,30 +57,38 @@ func main() {
 	}
 
 	repos := getRepos()
-
-	var batches []string
-	var batch []string
+	batches := Batches{
+		Batches: []Batch{},
+	}
+	reposInBatch := []string{}
+	batchNumber := 1
 
 	for index, repo := range repos {
-		batch = append(batch, repo)
+		batchNumber = int(index/batchSize) + 1
+		reposInBatch = append(reposInBatch, repo)
 
-		// If full, add batch and start over.
 		if (index+1)%batchSize == 0 {
-			batch, batches = appendBatchAsJsonString(batch, batches)
+			batches.Batches = append(batches.Batches, Batch{
+				Repos:  reposInBatch,
+				Number: batchNumber,
+			})
+			reposInBatch = []string{}
 		}
 	}
 
 	// If we have a partially full batch left over, add it too.
-	if len(batch) > 0 {
-		_, batches = appendBatchAsJsonString(batch, batches)
+	if len(reposInBatch) > 0 {
+		batches.Batches = append(batches.Batches, Batch{
+			Repos:  reposInBatch,
+			Number: batchNumber,
+		})
 	}
 
-	repoBatchesJson, err := json.Marshal(batches)
+	batchesJson, err := json.Marshal(batches)
 	if err != nil {
 		log.Fatalf("could not convert repo batches to JSON")
 	}
 
-	repoBatchesJsonString := fmt.Sprintf("{\"batches\": %s}", string(repoBatchesJson))
-	fmt.Printf("converted repo batches to JSON: \"%s\"", repoBatchesJsonString)
-	common.WriteOutput(repoBatchesJsonString)
+	fmt.Printf("converted repo batches to JSON: \"%s\"", string(batchesJson))
+	common.WriteOutput(string(batchesJson))
 }
