@@ -13,7 +13,7 @@ jobs:
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/batch-repos/main.go'
-      go-args: 2
+      go-args: 10
 
   sync-repos:
     needs: [ get-repos ]
