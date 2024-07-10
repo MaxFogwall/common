@@ -24,12 +24,21 @@ func getRepos() []string {
 }
 
 type Batches struct {
-	Batches []Batch `json:"batches"`
+	Batches []string `json:"batches"`
 }
 
 type Batch struct {
 	Repos  []string `json:"repos"`
 	Number int      `json:"number"`
+}
+
+func AsJson[T any](contents T) string {
+	contentsJson, err := json.Marshal(contents)
+	if err != nil {
+		log.Fatalf("could not convert repo batches to JSON")
+	}
+
+	return string(contentsJson)
 }
 
 func main() {
@@ -45,7 +54,7 @@ func main() {
 
 	repos := getRepos()
 	batches := Batches{
-		Batches: []Batch{},
+		Batches: []string{},
 	}
 	reposInBatch := []string{}
 	batchNumber := 1
@@ -55,19 +64,19 @@ func main() {
 		reposInBatch = append(reposInBatch, repo)
 
 		if (index+1)%batchSize == 0 {
-			batches.Batches = append(batches.Batches, Batch{
+			batches.Batches = append(batches.Batches, AsJson(Batch{
 				Repos:  reposInBatch,
 				Number: batchNumber,
-			})
+			}))
 			reposInBatch = []string{}
 		}
 	}
 
 	if len(reposInBatch) > 0 {
-		batches.Batches = append(batches.Batches, Batch{
+		batches.Batches = append(batches.Batches, AsJson(Batch{
 			Repos:  reposInBatch,
 			Number: batchNumber,
-		})
+		}))
 	}
 
 	batchesJson, err := json.Marshal(batches)
