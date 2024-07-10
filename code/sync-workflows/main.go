@@ -74,10 +74,8 @@ func WriteSyncedReposSummary(syncedRepos []SyncedRepository) {
 	}
 
 	var summaryLines []string
-	summaryLines = append(summaryLines, "### Overview")
 	summaryLines = append(summaryLines, strings.Join(syncedReposTable, "\r\n"))
 	if len(syncedReposErrors) > 0 {
-		summaryLines = append(summaryLines, "### Errors")
 		summaryLines = append(summaryLines, strings.Join(syncedReposErrors, "\r\n"))
 	}
 
