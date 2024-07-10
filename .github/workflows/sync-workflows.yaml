@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo ${{ toJSON(fromJSON(needs.get-repos.outputs.go-output).batches[0]) }}
+          echo "${{ toJSON(fromJSON(needs.get-repos.outputs.go-output).batches[0]) }}""
 
   sync-repos:
     needs: [ get-repos ]
