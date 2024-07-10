@@ -21,12 +21,12 @@ jobs:
       BATCH: ${{ fromJSON(needs.get-repos.outputs.go-output).batches }}
     runs-on: ubuntu-latest
     steps:
-      run: |
-        echo "$BATCH"
-      run: |
-        echo ${{ fromJSON(needs.get-repos.outputs.go-output).batches[0].repos }}
-      run: |
-        echo ${{ toJSON(fromJSON(needs.get-repos.outputs.go-output).batches[0].repos) }}
+      - run: |
+          echo "$BATCH"
+      - run: |
+          echo ${{ fromJSON(needs.get-repos.outputs.go-output).batches[0].repos }}
+      - run: |
+          echo ${{ toJSON(fromJSON(needs.get-repos.outputs.go-output).batches[0].repos) }}
 
   sync-repos:
     needs: [ get-repos ]
