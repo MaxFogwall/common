@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -20,11 +19,14 @@ type SyncedRepository struct {
 	PullRequest *gogithub.PullRequest
 }
 
-func getTargetRepos(arg string) []string {
+func getTargetRepos() []string {
+	reposJsonPath := "repos.json"
+	reposJson := common.ReadFile(reposJsonPath)
+
 	var repos []string
-	err := json.Unmarshal([]byte(arg), &repos)
+	err := json.Unmarshal([]byte(reposJson), &repos)
 	if err != nil {
-		panic(fmt.Errorf("could not parse argument '%s', expected a JSON formatted list of strings: %v", arg, err))
+		panic(fmt.Errorf("could not parse '%s', expected a JSON formatted list of strings: %v", reposJsonPath, err))
 	}
 
 	return repos
@@ -116,10 +118,7 @@ func syncWorkflows(repos []string) []SyncedRepository {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatalf("Missing argument for target repositories.")
-	}
-	targetRepos := getTargetRepos(os.Args[1])
+	targetRepos := getTargetRepos()
 	syncedRepos := syncWorkflows(targetRepos)
 
 	WriteSyncedReposSummary(syncedRepos)

@@ -9,24 +9,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  get-repos:
-    uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
-    with:
-      go-file-path: 'code/batch-repos/main.go'
-      go-args: 10
-
   sync-repos:
-    needs: [ get-repos ]
     permissions:
       contents: write
       pull-requests: write
-    strategy:
-      matrix:
-        batch: ${{ fromJSON(needs.get-repos.outputs.go-output).batches }}
-      fail-fast: false
-    name: Workflow Sync (Batch ${{ matrix.batch.number }})
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/sync-workflows/main.go'
-      go-args: ${{ toJSON(matrix.batch.repos) }}
     secrets: inherit
