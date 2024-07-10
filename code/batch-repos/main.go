@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -89,6 +90,13 @@ func main() {
 		log.Fatalf("could not convert repo batches to JSON")
 	}
 
-	fmt.Printf("converted repo batches to JSON: \"%s\"", string(batchesJson))
-	common.WriteOutput(string(batchesJson))
+	minifiedBatchesJson := &bytes.Buffer{}
+	err = json.Compact(minifiedBatchesJson, batchesJson)
+	if err != nil {
+		log.Fatalf("could not minify repo batches JSON")
+	}
+
+	minifiedBatchesJsonString := minifiedBatchesJson.String()
+	fmt.Printf("converted repo batches to JSON: \"%s\"", minifiedBatchesJsonString)
+	common.WriteOutput(minifiedBatchesJsonString)
 }
