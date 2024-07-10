@@ -45,10 +45,27 @@ func formatSuccess(syncedRepo SyncedRepository) string {
 	return "✔️"
 }
 
+func formatPullRequestStatus(pullRequest *gogithub.PullRequest) string {
+	mergedIcon := "![image](https://github.com/workflow-sync-poc/component-1/assets/48988185/43f86b74-a8eb-4df3-a2f3-ac8e714784b5)"
+	openIcon := "![image](https://github.com/workflow-sync-poc/component-1/assets/48988185/bc28bc57-f91c-4389-a103-d4524d4f6e39)"
+	closedIcon := "![image](https://github.com/workflow-sync-poc/component-1/assets/48988185/b64c89fa-fc88-47fb-b7e7-44c9b1d56515)"
+
+	if *pullRequest.Merged {
+		return mergedIcon
+	}
+
+	if *pullRequest.State == "closed" {
+		return closedIcon
+	}
+
+	return openIcon
+}
+
 func formatPullRequest(syncedRepo SyncedRepository) string {
 	pullRequestString := "No changes needed."
 	if syncedRepo.PullRequest != nil {
-		pullRequestString = fmt.Sprintf("[**%s**](%s) %s #%v", *syncedRepo.PullRequest.Title, *syncedRepo.PullRequest.HTMLURL, *syncedRepo.PullRequest.Base.Repo.Name, *syncedRepo.PullRequest.Number)
+
+		pullRequestString = fmt.Sprintf("%s [**%s**](%s) %s #%v", formatPullRequestStatus(syncedRepo.PullRequest), *syncedRepo.PullRequest.Title, *syncedRepo.PullRequest.HTMLURL, *syncedRepo.PullRequest.Base.Repo.Name, *syncedRepo.PullRequest.Number)
 	} else if syncedRepo.Error != nil {
 		pullRequestString = "Could not create."
 	}
