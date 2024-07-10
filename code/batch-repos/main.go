@@ -32,19 +32,6 @@ type Batch struct {
 	Number int      `json:"number"`
 }
 
-func appendBatchAsJsonString(batch []string, batches []string, batchNumber int) ([]string, []string) {
-
-	batchJson, err := json.Marshal(batch)
-	if err != nil {
-		log.Fatalf("could not convert batch '%v' to JSON: %v", batch, err)
-	}
-
-	batches = append(batches, fmt.Sprintf("{\"repos\": %s, \"number\": %v}", string(batchJson), batchNumber))
-	batch = []string{}
-
-	return batch, batches
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatalf("missing argument for batch size")
@@ -76,7 +63,6 @@ func main() {
 		}
 	}
 
-	// If we have a partially full batch left over, add it too.
 	if len(reposInBatch) > 0 {
 		batches.Batches = append(batches.Batches, Batch{
 			Repos:  reposInBatch,
