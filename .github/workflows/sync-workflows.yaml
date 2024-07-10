@@ -14,6 +14,19 @@ jobs:
     with:
       go-file-path: 'code/batch-repos/main.go'
       go-args: 2
+    
+  show-repos:
+    needs: [ get-repos ]
+    env:
+      BATCH: ${{ fromJSON(needs.get-repos.outputs.go-output).batches }}
+    runs-on: ubuntu-latest
+    steps:
+      run: |
+        echo "$BATCH"
+      run: |
+        echo ${{ fromJSON(needs.get-repos.outputs.go-output).batches[0].repos }}
+      run: |
+        echo ${{ toJSON(fromJSON(needs.get-repos.outputs.go-output).batches[0].repos) }}
 
   sync-repos:
     needs: [ get-repos ]
@@ -28,5 +41,5 @@ jobs:
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/sync-workflows/main.go'
-      go-args: ${{ fromJSON(matrix.batch).repos }}
+      go-args: ${{ toJSON(matrix.batch.repos) }}
     secrets: inherit
