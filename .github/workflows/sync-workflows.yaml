@@ -37,5 +37,5 @@ jobs:
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/sync-workflows/main.go'
-      go-args: ${{ matrix.batch.repos }}
+      go-args: ${{ fromJSON(matrix.batch).repos }}
     secrets: inherit
