@@ -48,7 +48,7 @@ func formatSuccess(syncedRepo SyncedRepository) string {
 func formatPullRequest(syncedRepo SyncedRepository) string {
 	pullRequestString := "No changes needed."
 	if syncedRepo.PullRequest != nil {
-		pullRequestString = *syncedRepo.PullRequest.HTMLURL
+		pullRequestString = fmt.Sprintf("[**%s**](%s) %s #%s", *syncedRepo.PullRequest.Title, *syncedRepo.PullRequest.HTMLURL, *syncedRepo.PullRequest.Base.Repo.Name, *syncedRepo.PullRequest.NodeID)
 	} else if syncedRepo.Error != nil {
 		pullRequestString = "Could not create."
 	}
