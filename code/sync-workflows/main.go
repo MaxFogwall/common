@@ -61,7 +61,7 @@ func formatPullRequestStatus(syncedRepo SyncedRepository) string {
 func formatPullRequest(syncedRepo SyncedRepository) string {
 	pullRequestString := "No changes needed."
 	if syncedRepo.PullRequest != nil {
-		pullRequestString = fmt.Sprintf("%s [**%s**](%s) %s #%v", formatPullRequestStatus(syncedRepo), *syncedRepo.PullRequest.Title, *syncedRepo.PullRequest.HTMLURL, *syncedRepo.PullRequest.Base.Repo.Name, *syncedRepo.PullRequest.Number)
+		pullRequestString = fmt.Sprintf("%s [**%s**](%s) #%v", formatPullRequestStatus(syncedRepo), *syncedRepo.PullRequest.Title, *syncedRepo.PullRequest.HTMLURL, *syncedRepo.PullRequest.Number)
 	} else if syncedRepo.Error != nil {
 		pullRequestString = "Could not create."
 	}
