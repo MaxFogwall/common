@@ -43,6 +43,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.go-version }}
+          cache: true
+          cache-dependency-path: go.sum
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
         env:
