@@ -42,7 +42,7 @@ func formatSuccess(syncedRepo SyncedRepository) string {
 		return "❌"
 	}
 
-	return "✅"
+	return "✔️"
 }
 
 func formatPullRequest(syncedRepo SyncedRepository) string {
