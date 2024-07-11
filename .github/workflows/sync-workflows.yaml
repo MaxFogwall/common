@@ -3,8 +3,8 @@ name: Sync Workflows
 on:
   push:
     paths:
-      - '.github/workflows/synced_**.yaml'
-      - '.github/workflows/synced_**.yml'
+      - '.github/workflows/synced_*.yaml'
+      - '.github/workflows/synced_*.yml'
       - 'repos.json'
   workflow_dispatch:
 
