@@ -319,7 +319,7 @@ func locallySync(targetRepo string, targetRepoDir string, sourceRef string) erro
 		return fmt.Errorf("could not copy synced workflow files to target repo '%s': %w", targetRepo, err)
 	}
 
-	if err := ModifySpecificFiles(sourceWorkflowPath, isSyncedFile, replaceRef); err != nil {
+	if err := ModifySpecificFiles(targetWorkflowPath, isSyncedFile, replaceRef); err != nil {
 		return fmt.Errorf("could not replace ref of workflows in target repo '%s': %v", targetRepo, err)
 	}
 
