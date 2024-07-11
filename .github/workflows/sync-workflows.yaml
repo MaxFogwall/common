@@ -16,4 +16,5 @@ jobs:
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/sync-workflows/main.go'
+      go-args: 'v1'
     secrets: inherit

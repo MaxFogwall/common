@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -21,10 +22,13 @@ type SyncedRepository struct {
 
 func getTargetRepos() []string {
 	reposJsonPath := "repos.json"
-	reposJson := common.ReadFile(reposJsonPath)
+	reposJson, err := common.ReadFile(reposJsonPath)
+	if err != nil {
+		panic(fmt.Errorf("could not read '%s': %v", reposJsonPath, err))
+	}
 
 	var repos []string
-	err := json.Unmarshal([]byte(reposJson), &repos)
+	err = json.Unmarshal([]byte(reposJson), &repos)
 	if err != nil {
 		panic(fmt.Errorf("could not parse '%s', expected a JSON formatted list of strings: %v", reposJsonPath, err))
 	}
@@ -107,12 +111,12 @@ func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
 	return false
 }
 
-func syncWorkflows(repos []string) []SyncedRepository {
+func syncWorkflows(repos []string, sourceRef string) []SyncedRepository {
 	startTime := time.Now()
 	syncedRepos := []SyncedRepository{}
 
 	for _, repo := range repos {
-		pullRequest, err := common.SyncRepository(repo)
+		pullRequest, err := common.SyncRepository(repo, sourceRef)
 		if err != nil {
 			log.Printf("Failed to sync to '%s': %v\n", repo, err)
 		}
@@ -131,8 +135,13 @@ func syncWorkflows(repos []string) []SyncedRepository {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatalf("missing argument for source ref (e.g. \"v1\")")
+	}
+
+	sourceRef := os.Args[1]
 	targetRepos := getTargetRepos()
-	syncedRepos := syncWorkflows(targetRepos)
+	syncedRepos := syncWorkflows(targetRepos, sourceRef)
 
 	WriteSyncedReposSummary(syncedRepos)
 	if AnySyncedRepoHasError(syncedRepos) {

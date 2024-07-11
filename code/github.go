@@ -288,7 +288,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 	return true, nil
 }
 
-func locallySync(targetRepo string, targetRepoDir string) error {
+func locallySync(targetRepo string, targetRepoDir string, sourceRef string) error {
 	if err := CloneRepository(targetRepo, targetRepoDir); err != nil {
 		return err
 	}
@@ -296,6 +296,10 @@ func locallySync(targetRepo string, targetRepoDir string) error {
 	syncedFilePattern := regexp.MustCompile(`synced_.+\.y(a)?ml`)
 	isSyncedFile := func(info os.FileInfo) bool {
 		return syncedFilePattern.MatchString(info.Name())
+	}
+
+	replaceRef := func(contents string) string {
+		return strings.ReplaceAll(contents, "@main", "@"+sourceRef)
 	}
 
 	targetWorkflowPath := targetRepoDir + "/.github/workflows"
@@ -310,8 +314,13 @@ func locallySync(targetRepo string, targetRepoDir string) error {
 	if err := DeleteSpecificFiles(targetWorkflowPath, isSyncedFile); err != nil {
 		return fmt.Errorf("could not delete synced workflow files from target repo '%s': %w", targetRepo, err)
 	}
+
 	if err := CopySpecificFiles(sourceWorkflowPath, targetWorkflowPath, isSyncedFile); err != nil {
 		return fmt.Errorf("could not copy synced workflow files to target repo '%s': %w", targetRepo, err)
+	}
+
+	if err := ModifySpecificFiles(sourceWorkflowPath, isSyncedFile, replaceRef); err != nil {
+		return fmt.Errorf("could not replace ref of workflows in target repo '%s': %v", targetRepo, err)
 	}
 
 	return nil
@@ -389,10 +398,10 @@ func MergePullRequest(owner string, name string, pullRequest *gogithub.PullReque
 	return nil
 }
 
-func SyncRepository(repo string) (*gogithub.PullRequest, error) {
+func SyncRepository(repo string, sourceRef string) (*gogithub.PullRequest, error) {
 	owner, name := RepoOwnerName(repo)
 	repoDir := name
-	if err := locallySync(repo, repoDir); err != nil {
+	if err := locallySync(repo, repoDir, sourceRef); err != nil {
 		return nil, fmt.Errorf("could not sync locally: %w", err)
 	}
 
