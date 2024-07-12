@@ -111,18 +111,18 @@ func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
 	return false
 }
 
-func syncWorkflows(repos []string) []SyncedRepository {
+func syncWorkflows(sourceRepo string, targetRepos []string) []SyncedRepository {
 	startTime := time.Now()
 	syncedRepos := []SyncedRepository{}
 
-	for _, repo := range repos {
-		pullRequest, err := common.SyncRepository(repo)
+	for _, targetRepo := range targetRepos {
+		pullRequest, err := common.SyncRepository(sourceRepo, targetRepo)
 		if err != nil {
-			log.Printf("Failed to sync to '%s': %v\n", repo, err)
+			log.Printf("Failed to sync to '%s': %v\n", targetRepo, err)
 		}
 
 		syncedRepository := SyncedRepository{
-			Identifier:  repo,
+			Identifier:  targetRepo,
 			Error:       err,
 			ElapsedTime: time.Since(startTime),
 			PullRequest: pullRequest,
@@ -159,8 +159,13 @@ func main() {
 		panic(err)
 	}
 
+	sourceRepo, err := common.GetCurrentRepository()
+	if err != nil {
+		panic(err)
+	}
+
 	targetRepos := getTargetRepos()
-	syncedRepos := syncWorkflows(targetRepos)
+	syncedRepos := syncWorkflows(sourceRepo, targetRepos)
 
 	WriteSyncedReposSummary(syncedRepos)
 	if AnySyncedRepoHasError(syncedRepos) {

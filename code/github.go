@@ -261,6 +261,23 @@ func CheckoutExistingBranch(branch string) error {
 	return nil
 }
 
+func GetCurrentRepository() (string, error) {
+	repoUrl, err := runCommand("git", "config", "--get", "remote.origin.url")
+	if err != nil {
+		return "", fmt.Errorf("could not get current repository: %v", err)
+	}
+	if repoUrl == "" {
+		return "", fmt.Errorf("could not get current repository, it returned \"\"")
+	}
+
+	// E.g. "https://github.com/workflow-sync-poc/common.git" -> "workflow-sync-poc/common"
+	repoFromUrlPattern := regexp.MustCompile(`https://github.com/(.+?)\.git`)
+	repoFromUrlMatch := repoFromUrlPattern.FindString(repoUrl)
+	repo := string(repoFromUrlMatch)
+
+	return repo, nil
+}
+
 func DeleteBranch(owner string, name string, branch string) error {
 	defaultBranch, err := GetDefaultBranch(owner, name)
 	if err != nil {
@@ -321,7 +338,12 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 	return true, nil
 }
 
-func GetLatestVersionTag() (string, error) {
+func GetLatestVersionTag(repo string) (string, error) {
+	err := SetOrigin(repo)
+	if err != nil {
+		return "", err
+	}
+
 	output, err := runCommand("bash", "-c", `git ls-remote --tags origin | grep -o 'refs/tags/v.*' | sed 's#refs/tags/##; s#\^{}##' | sort -V | tail -n1`)
 	if err != nil {
 		return "", fmt.Errorf("could not get latest tag: %v", err)
@@ -387,7 +409,7 @@ func AddOrMoveTag(tag string) error {
 	return nil
 }
 
-func locallySync(targetRepo string, targetRepoDir string) error {
+func locallySync(sourceRepo string, targetRepo string, targetRepoDir string) error {
 	if err := CloneRepository(targetRepo, targetRepoDir); err != nil {
 		return err
 	}
@@ -397,7 +419,7 @@ func locallySync(targetRepo string, targetRepoDir string) error {
 		return syncedFilePattern.MatchString(info.Name())
 	}
 
-	versionTag, err := GetLatestVersionTag()
+	versionTag, err := GetLatestVersionTag(sourceRepo)
 	if err != nil {
 		return err
 	}
@@ -505,18 +527,18 @@ func MergePullRequest(owner string, name string, pullRequest *gogithub.PullReque
 	return nil
 }
 
-func SyncRepository(repo string) (*gogithub.PullRequest, error) {
-	owner, name := RepoOwnerName(repo)
-	repoDir := name
-	if err := locallySync(repo, repoDir); err != nil {
+func SyncRepository(sourceRepo string, targetRepo string) (*gogithub.PullRequest, error) {
+	targetOwner, targetName := RepoOwnerName(targetRepo)
+	targetRepoDir := targetName
+	if err := locallySync(sourceRepo, targetRepo, targetRepoDir); err != nil {
 		return nil, fmt.Errorf("could not sync locally: %w", err)
 	}
 
 	featureBranch := "sync-workflows"
 	changesPushed := false
-	err := ExecInDir(repoDir, func() error {
+	err := ExecInDir(targetRepoDir, func() error {
 		SetupGitHubUser()
-		success, err := CreateAndPushToNewBranch(owner, name, featureBranch)
+		success, err := CreateAndPushToNewBranch(targetOwner, targetName, featureBranch)
 		changesPushed = success
 		if err != nil {
 			return fmt.Errorf("could not create and push to new branch '%s': %w", featureBranch, err)
@@ -537,22 +559,22 @@ func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 		return nil, err
 	}
 
-	pullRequest, err := CreatePullRequest(owner, name, featureBranch, "(sync): update workflows", workflowRun)
+	pullRequest, err := CreatePullRequest(targetOwner, targetName, featureBranch, "(sync): update workflows", workflowRun)
 	if err != nil {
 		return pullRequest, err
 	}
 
-	if err := ApprovePullRequest(owner, name, pullRequest); err != nil {
+	if err := ApprovePullRequest(targetOwner, targetName, pullRequest); err != nil {
 		return pullRequest, err
 	}
 
-	if err := MergePullRequest(owner, name, pullRequest); err != nil {
+	if err := MergePullRequest(targetOwner, targetName, pullRequest); err != nil {
 		return pullRequest, err
 	}
 
-	err = ExecInDir(repoDir, func() error {
+	err = ExecInDir(targetRepoDir, func() error {
 		SetupGitHubUser()
-		if err := DeleteBranch(owner, name, featureBranch); err != nil {
+		if err := DeleteBranch(targetOwner, targetName, featureBranch); err != nil {
 			return fmt.Errorf("could not delete merged '%s' branch: %w", featureBranch, err)
 		}
 

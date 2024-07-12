@@ -75,8 +75,12 @@ func reasonToSyncWorkflows() string {
 
 func main() {
 	common.SetupGitHubUser()
+	sourceRepo, err := common.GetCurrentRepository()
+	if err != nil {
+		panic(err)
+	}
 
-	tag, err := common.GetLatestVersionTag()
+	tag, err := common.GetLatestVersionTag(sourceRepo)
 	if err != nil {
 		panic(err)
 	}
