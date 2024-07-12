@@ -48,6 +48,8 @@ func shouldSyncWorkflows() bool {
 }
 
 func main() {
+	common.SetupGitHubUser()
+
 	tag, err := common.GetLatestTag()
 	if err != nil {
 		panic(err)
