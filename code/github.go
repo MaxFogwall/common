@@ -16,7 +16,7 @@ import (
 	gogithub "github.com/google/go-github/v62/github"
 )
 
-func runCommand(name string, args ...string) error {
+func runCommand(name string, args ...string) (string, error) {
 	command := exec.Command(name, args...)
 	var stderr bytes.Buffer
 	command.Stdout = os.Stdout
@@ -24,19 +24,12 @@ func runCommand(name string, args ...string) error {
 
 	log.Printf("> %s %s", name, sanitize(strings.Join(args, " ")))
 
-	err := command.Run()
+	out, err := command.Output()
 	if err != nil && stderr.Len() > 0 {
 		err = fmt.Errorf("%s", stderr.String())
 	}
 
-	return err
-}
-
-func getCommand(name string, args ...string) *exec.Cmd {
-	command := exec.Command(name, args...)
-	command.Stderr = os.Stderr
-	log.Printf("> %s %s", name, strings.Join(args, " "))
-	return command
+	return string(out), err
 }
 
 func RepoOwnerName(repo string) (string, string) {
@@ -124,11 +117,11 @@ func CloneRepository(repo string, dir string) error {
 	}
 
 	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getClientToken(), repo)
-	if err := runCommand("git", "clone", repoUrl, dir); err != nil {
+	if _, err := runCommand("git", "clone", repoUrl, dir); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
 
-	if err := runCommand("git", "remote", "set-url", "origin", repoUrl); err != nil {
+	if _, err := runCommand("git", "remote", "set-url", "origin", repoUrl); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
 
@@ -186,8 +179,7 @@ func RemoteBranchExists(owner string, name string, branch string) (bool, error) 
 }
 
 func IsLastCommitClean(dir string) (bool, error) {
-	command := getCommand("git", "show", "--name-only", "--pretty=format:", "--", ".github/workflows/synced_*")
-	out, err := command.Output()
+	out, err := runCommand("git", "show", "--name-only", "--pretty=format:", "--", ".github/workflows/synced_*")
 	if err != nil {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
@@ -196,8 +188,7 @@ func IsLastCommitClean(dir string) (bool, error) {
 }
 
 func IsWorkingTreeClean(dir string) (bool, error) {
-	command := getCommand("git", "status", "--porcelain", "\""+dir+"\"")
-	out, err := command.Output()
+	out, err := runCommand("git", "status", "--porcelain", "\""+dir+"\"")
 	if err != nil {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
@@ -206,8 +197,7 @@ func IsWorkingTreeClean(dir string) (bool, error) {
 }
 
 func LocalBranchExists(branch string) (bool, error) {
-	err := runCommand("git", "rev-parse", "--verify", branch)
-	if err != nil {
+	if _, err := runCommand("git", "rev-parse", "--verify", branch); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return exitErr.Success(), nil
 		}
@@ -218,7 +208,7 @@ func LocalBranchExists(branch string) (bool, error) {
 }
 
 func DeleteLocalBranch(branch string) error {
-	if err := runCommand("git", "branch", "-D", branch); err != nil {
+	if _, err := runCommand("git", "branch", "-D", branch); err != nil {
 		return fmt.Errorf("could not delete local branch '%s': %v", branch, err)
 	}
 
@@ -226,7 +216,7 @@ func DeleteLocalBranch(branch string) error {
 }
 
 func DeleteRemoteBranch(branch string) error {
-	if err := runCommand("git", "push", "origin", "--delete", branch); err != nil {
+	if _, err := runCommand("git", "push", "origin", "--delete", branch); err != nil {
 		return fmt.Errorf("could not delete remote branch '%s': %v", branch, err)
 	}
 
@@ -234,7 +224,7 @@ func DeleteRemoteBranch(branch string) error {
 }
 
 func CheckoutNewBranch(branch string) error {
-	if err := runCommand("git", "checkout", "-b", branch); err != nil {
+	if _, err := runCommand("git", "checkout", "-b", branch); err != nil {
 		return fmt.Errorf("could not checkout new branch '%s': %v", branch, err)
 	}
 
@@ -242,7 +232,7 @@ func CheckoutNewBranch(branch string) error {
 }
 
 func CheckoutExistingBranch(branch string) error {
-	if err := runCommand("git", "checkout", branch); err != nil {
+	if _, err := runCommand("git", "checkout", branch); err != nil {
 		return fmt.Errorf("could not checkout existing branch '%s': %v", branch, err)
 	}
 
@@ -287,7 +277,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 		return false, err
 	}
 
-	if err := runCommand("git", "add", ".github/workflows"); err != nil {
+	if _, err := runCommand("git", "add", ".github/workflows"); err != nil {
 		return false, fmt.Errorf("could not add workflows: %v", err)
 	}
 
@@ -298,11 +288,11 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 		return false, nil
 	}
 
-	if err := runCommand("git", "commit", "-m", "sync workflows"); err != nil {
+	if _, err := runCommand("git", "commit", "-m", "sync workflows"); err != nil {
 		return false, fmt.Errorf("could not commit changes: %v", err)
 	}
 
-	if err := runCommand("git", "push", "-u", "origin", branch); err != nil {
+	if _, err := runCommand("git", "push", "-u", "origin", branch); err != nil {
 		return false, fmt.Errorf("could not push to remote '%s': %v", branch, err)
 	}
 
@@ -310,8 +300,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
-	command := getCommand("bash", "-c", "git ls-remote --tags origin | grep -o 'refs/tags/.*' | sed 's#refs/tags/##' | sort -V | tail -n1")
-	output, err := command.Output()
+	output, err := runCommand("bash", "-c", "git ls-remote --tags origin | grep -o 'refs/tags/.*' | sed 's#refs/tags/##' | sort -V | tail -n1")
 	if err != nil {
 		return "", fmt.Errorf("could not get latest tag: %v", err)
 	}
@@ -321,11 +310,11 @@ func GetLatestTag() (string, error) {
 }
 
 func AddTag(tag string) error {
-	if err := runCommand("git", "tag", tag); err != nil {
+	if _, err := runCommand("git", "tag", tag); err != nil {
 		return fmt.Errorf("could not update local tag '%s': %v", tag, err)
 	}
 
-	if err := runCommand("git", "push", "origin", tag); err != nil {
+	if _, err := runCommand("git", "push", "origin", tag); err != nil {
 		return fmt.Errorf("could not push remote tag '%s': %v", tag, err)
 	}
 
@@ -334,11 +323,11 @@ func AddTag(tag string) error {
 
 func MoveTag(tag string) error {
 	// See recommendation from https://github.com/actions/toolkit/blob/master/docs/action-versioning.md
-	if err := runCommand("git", "tag", "-fa", tag, "-m", fmt.Sprintf("Update tag `%s` to latest commit", tag)); err != nil {
+	if _, err := runCommand("git", "tag", "-fa", tag, "-m", fmt.Sprintf("Update tag `%s` to latest commit", tag)); err != nil {
 		return fmt.Errorf("could not update local tag '%s': %v", tag, err)
 	}
 
-	if err := runCommand("git", "push", "origin", tag, "--force"); err != nil {
+	if _, err := runCommand("git", "push", "origin", tag, "--force"); err != nil {
 		return fmt.Errorf("could not push remote tag '%s': %v", tag, err)
 	}
 
