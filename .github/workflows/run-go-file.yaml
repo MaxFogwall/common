@@ -27,8 +27,6 @@ on:
 jobs:
   run-go-file:
     permissions:
-      contents: write
-      pull-requests: write
     outputs:
       go-output: ${{ steps.set-output.outputs.go-output }}
     runs-on: ubuntu-latest
