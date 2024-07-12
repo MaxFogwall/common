@@ -302,6 +302,11 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
+	err := CheckoutExistingBranch("main")
+	if err != nil {
+		return "", fmt.Errorf("could not checkout default branch: %v", err)
+	}
+
 	command := getCommand("git", "describe", "--tags", "--abbrev=0")
 	var stderr bytes.Buffer
 	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
