@@ -141,6 +141,7 @@ func main() {
 	if AnySyncedRepoHasError(syncedRepos) {
 		panic(errors.New("one or more repositories were not synced successfully"))
 	} else {
+		common.SetupGitHubUser()
 		if err := common.AddOrMoveTag("last-synced"); err != nil {
 			panic(err)
 		}
