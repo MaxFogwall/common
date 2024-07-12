@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -22,11 +23,10 @@ func runCommand(name string, args ...string) error {
 	return command.Run()
 }
 
-func runAndOutputCommand(name string, args ...string) ([]byte, error) {
+func getCommand(name string, args ...string) *exec.Cmd {
 	command := exec.Command(name, args...)
-	command.Stderr = os.Stderr
 	log.Printf("> %s %s", name, strings.Join(args, " "))
-	return command.Output()
+	return command
 }
 
 func RepoOwnerName(repo string) (string, string) {
@@ -176,7 +176,8 @@ func RemoteBranchExists(owner string, name string, branch string) (bool, error) 
 }
 
 func IsLastCommitClean(dir string) (bool, error) {
-	out, err := runAndOutputCommand("git", "show", "--name-only", "--pretty=format:", "--", ".github/workflows/synced_*")
+	command := getCommand("git", "show", "--name-only", "--pretty=format:", "--", ".github/workflows/synced_*")
+	out, err := command.Output()
 	if err != nil {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
@@ -185,7 +186,8 @@ func IsLastCommitClean(dir string) (bool, error) {
 }
 
 func IsWorkingTreeClean(dir string) (bool, error) {
-	out, err := runAndOutputCommand("git", "status", "--porcelain", "\""+dir+"\"")
+	command := getCommand("git", "status", "--porcelain", "\""+dir+"\"")
+	out, err := command.Output()
 	if err != nil {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
@@ -194,7 +196,7 @@ func IsWorkingTreeClean(dir string) (bool, error) {
 }
 
 func LocalBranchExists(branch string) (bool, error) {
-	_, err := runAndOutputCommand("git", "rev-parse", "--verify", branch)
+	err := runCommand("git", "rev-parse", "--verify", branch)
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return exitErr.Success(), nil
@@ -298,9 +300,12 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
-	output, err := runAndOutputCommand("git", "describe", "--tags", "--abbrev=0")
+	command := getCommand("git", "describe", "--tags", "--abbrev=0")
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
+	output, err := command.Output()
 	if err != nil {
-		if string(output) == "fatal: No names found, cannot describe anything." {
+		if stderr.String() == "fatal: No names found, cannot describe anything." {
 			return "", nil
 		}
 
