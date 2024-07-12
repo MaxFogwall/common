@@ -318,7 +318,7 @@ func GetLatestTag() (string, error) {
 			return "", nil
 		}
 
-		return "", fmt.Errorf("could not get latest tag: %v", err)
+		return "", fmt.Errorf("could not get latest tag (%s): %v", string(output), err)
 	}
 
 	return string(output), nil
