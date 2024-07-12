@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -111,12 +110,12 @@ func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
 	return false
 }
 
-func syncWorkflows(repos []string, sourceRef string) []SyncedRepository {
+func syncWorkflows(repos []string) []SyncedRepository {
 	startTime := time.Now()
 	syncedRepos := []SyncedRepository{}
 
 	for _, repo := range repos {
-		pullRequest, err := common.SyncRepository(repo, sourceRef)
+		pullRequest, err := common.SyncRepository(repo)
 		if err != nil {
 			log.Printf("Failed to sync to '%s': %v\n", repo, err)
 		}
@@ -135,13 +134,8 @@ func syncWorkflows(repos []string, sourceRef string) []SyncedRepository {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatalf("missing argument for source ref (e.g. \"v1\")")
-	}
-
-	sourceRef := os.Args[1]
 	targetRepos := getTargetRepos()
-	syncedRepos := syncWorkflows(targetRepos, sourceRef)
+	syncedRepos := syncWorkflows(targetRepos)
 
 	WriteSyncedReposSummary(syncedRepos)
 	if AnySyncedRepoHasError(syncedRepos) {

@@ -375,7 +375,7 @@ func AddOrMoveTag(tag string) error {
 	return nil
 }
 
-func locallySync(targetRepo string, targetRepoDir string, sourceRef string) error {
+func locallySync(targetRepo string, targetRepoDir string) error {
 	if err := CloneRepository(targetRepo, targetRepoDir); err != nil {
 		return err
 	}
@@ -385,8 +385,13 @@ func locallySync(targetRepo string, targetRepoDir string, sourceRef string) erro
 		return syncedFilePattern.MatchString(info.Name())
 	}
 
+	versionTag, err := GetLatestVersionTag()
+	if err != nil {
+		return err
+	}
+
 	replaceRef := func(contents string) string {
-		return strings.ReplaceAll(contents, "@main", "@"+sourceRef)
+		return strings.ReplaceAll(contents, "@main", "@"+versionTag)
 	}
 
 	targetWorkflowPath := targetRepoDir + "/.github/workflows"
@@ -485,10 +490,10 @@ func MergePullRequest(owner string, name string, pullRequest *gogithub.PullReque
 	return nil
 }
 
-func SyncRepository(repo string, sourceRef string) (*gogithub.PullRequest, error) {
+func SyncRepository(repo string) (*gogithub.PullRequest, error) {
 	owner, name := RepoOwnerName(repo)
 	repoDir := name
-	if err := locallySync(repo, repoDir, sourceRef); err != nil {
+	if err := locallySync(repo, repoDir); err != nil {
 		return nil, fmt.Errorf("could not sync locally: %w", err)
 	}
 
