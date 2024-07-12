@@ -187,22 +187,17 @@ func RemoteBranchExists(owner string, name string, branch string) (bool, error) 
 	return branchInfo != nil, nil
 }
 
-func IsLastCommitClean(dir string) (bool, error) {
-	out, err := runCommand("git", "show", "--name-only", "--pretty=format:", "--", ".github/workflows/synced_*")
+func GetFilesChangedSince(tag string, dir string) ([]string, error) {
+	out, err := runCommand("git", "diff", "--name-only", tag, "--", dir)
 	if err != nil {
-		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
+		return nil, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
 
-	return string(out) == "", nil
+	return strings.Split(out, "\n"), nil
 }
 
-func IsTaggedCommitClean(dir string, tag string) (bool, error) {
-	out, err := runCommand("git", "diff", "--name-only", tag, "--", ".github/workflows/synced_*")
-	if err != nil {
-		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
-	}
-
-	return string(out) == "", nil
+func GetFilesChangedInLastCommit(dir string) ([]string, error) {
+	return GetFilesChangedSince("HEAD^", dir)
 }
 
 func IsWorkingTreeClean(dir string) (bool, error) {
