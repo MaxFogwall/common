@@ -21,7 +21,7 @@ func nextMajorVersionForTag(tag string) int {
 	return majorVersion + 1
 }
 
-func isAnySyncedWorkflowChanged() bool {
+func hasAnySyncedWorkflowChanged() bool {
 	isNoSyncedWorkflowChanged, err := common.IsLastCommitClean(".github/workflows/synced_*")
 	if err != nil {
 		panic(err)
@@ -30,8 +30,8 @@ func isAnySyncedWorkflowChanged() bool {
 	return !isNoSyncedWorkflowChanged
 }
 
-func isSyncedReposListChanged() bool {
-	isSyncedReposListSame, err := common.IsLastCommitClean("repos.json")
+func hasSyncedReposListChangedSince(sinceTag string) bool {
+	isSyncedReposListSame, err := common.IsTaggedCommitClean("repos.json", sinceTag)
 	if err != nil {
 		panic(err)
 	}
@@ -39,18 +39,38 @@ func isSyncedReposListChanged() bool {
 	return !isSyncedReposListSame
 }
 
+func hasAnySyncedWorkflowChangedSince(sinceTag string) bool {
+	isSyncedWorkflowsSame, err := common.IsTaggedCommitClean(".github/workflows/synced_*", sinceTag)
+	if err != nil {
+		panic(err)
+	}
+
+	return !isSyncedWorkflowsSame
+}
+
 func shouldIncrementTag() bool {
-	return isAnySyncedWorkflowChanged()
+	return hasAnySyncedWorkflowChanged()
 }
 
 func shouldSyncWorkflows() bool {
-	return isAnySyncedWorkflowChanged() || isSyncedReposListChanged()
+	lastSyncedTag := "last-synced"
+
+	hasEverSynced, err := common.TagExists(lastSyncedTag)
+	if err != nil {
+		panic(err)
+	}
+
+	if !hasEverSynced {
+		return true
+	}
+
+	return hasAnySyncedWorkflowChangedSince(lastSyncedTag) || hasSyncedReposListChangedSince(lastSyncedTag)
 }
 
 func main() {
 	common.SetupGitHubUser()
 
-	tag, err := common.GetLatestTag()
+	tag, err := common.GetLatestVersionTag()
 	if err != nil {
 		panic(err)
 	}

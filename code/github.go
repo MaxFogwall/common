@@ -187,6 +187,15 @@ func IsLastCommitClean(dir string) (bool, error) {
 	return string(out) == "", nil
 }
 
+func IsTaggedCommitClean(dir string, tag string) (bool, error) {
+	out, err := runCommand("git", "diff", "--name-only", tag, "--", ".github/workflows/synced_*")
+	if err != nil {
+		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
+	}
+
+	return string(out) == "", nil
+}
+
 func IsWorkingTreeClean(dir string) (bool, error) {
 	out, err := runCommand("git", "status", "--porcelain", "\""+dir+"\"")
 	if err != nil {
@@ -299,8 +308,8 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 	return true, nil
 }
 
-func GetLatestTag() (string, error) {
-	output, err := runCommand("bash", "-c", `git ls-remote --tags origin | grep -o 'refs/tags/.*' | sed 's#refs/tags/##; s#\^{}##' | sort -V | tail -n1`)
+func GetLatestVersionTag() (string, error) {
+	output, err := runCommand("bash", "-c", `git ls-remote --tags origin | grep -o 'refs/tags/v.*' | sed 's#refs/tags/##; s#\^{}##' | sort -V | tail -n1`)
 	if err != nil {
 		return "", fmt.Errorf("could not get latest tag: %v", err)
 	}
@@ -329,6 +338,34 @@ func MoveTag(tag string) error {
 
 	if _, err := runCommand("git", "push", "origin", tag, "--force"); err != nil {
 		return fmt.Errorf("could not push remote tag '%s': %v", tag, err)
+	}
+
+	return nil
+}
+
+func TagExists(tag string) (bool, error) {
+	out, err := runCommand("bash", "-c", `git ls-remote --tags origin | grep -q "refs/tags/last-synced"`)
+	if err != nil {
+		return false, fmt.Errorf("could not check whether tag '%s' exists: %v", tag, err)
+	}
+
+	return out != "", nil
+}
+
+func AddOrMoveTag(tag string) error {
+	tagExists, err := TagExists(tag)
+	if err != nil {
+		return fmt.Errorf("could not add or move tag '%s': %v", tag, err)
+	}
+
+	if tagExists {
+		err = AddTag(tag)
+	} else {
+		err = MoveTag(tag)
+	}
+
+	if err != nil {
+		return fmt.Errorf("could not add or move tag '%s': %v", tag, err)
 	}
 
 	return nil
