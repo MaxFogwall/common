@@ -18,18 +18,18 @@ import (
 
 func runCommand(name string, args ...string) (string, error) {
 	command := exec.Command(name, args...)
-	var stderr bytes.Buffer
-	command.Stdout = os.Stdout
+	var stdout, stderr bytes.Buffer
+	command.Stdout = io.MultiWriter(os.Stdout, &stdout)
 	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
 
 	log.Printf("> %s %s", name, sanitize(strings.Join(args, " ")))
 
-	out, err := command.Output()
+	err := command.Run()
 	if err != nil && stderr.Len() > 0 {
 		err = fmt.Errorf("%s", stderr.String())
 	}
 
-	return string(out), err
+	return stdout.String(), err
 }
 
 func RepoOwnerName(repo string) (string, string) {
