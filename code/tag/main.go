@@ -18,7 +18,7 @@ func nextMajorVersionForTag(tag string) int {
 		panic(fmt.Errorf("could not parse major version from tag '%s': %v", tag, err))
 	}
 
-	return majorVersion
+	return majorVersion + 1
 }
 
 func isAnySyncedWorkflowChanged() bool {
