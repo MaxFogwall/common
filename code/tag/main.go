@@ -65,7 +65,12 @@ func reasonToSyncWorkflows() string {
 		return ""
 	}
 
-	return fmt.Sprintf("`%s` were different since `%s`", strings.Join(changedFiles, "`, `"), lastSyncedTag)
+	wereOrWas := "were"
+	if len(changedFiles) == 1 {
+		wereOrWas = "was"
+	}
+
+	return fmt.Sprintf("`%s` %s different since `%s`", strings.Join(changedFiles, "`, `"), wereOrWas, lastSyncedTag)
 }
 
 func main() {
