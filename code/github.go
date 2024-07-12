@@ -300,7 +300,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
-	output, err := runCommand("bash", "-c", "git ls-remote --tags origin | grep -o 'refs/tags/.*' | sed 's#refs/tags/##' | sort -V | tail -n1")
+	output, err := runCommand("bash", "-c", "git ls-remote --tags origin | grep -o 'refs/tags/.*' | sed 's#refs/tags/##; s#^{##' | sort -V | tail -n1")
 	if err != nil {
 		return "", fmt.Errorf("could not get latest tag: %v", err)
 	}
