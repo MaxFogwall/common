@@ -57,15 +57,21 @@ func main() {
 
 	if tag == "" {
 		tag = "v1"
-		common.AddTag(tag)
+		if err := common.AddTag(tag); err != nil {
+			panic(err)
+		}
 		common.WriteJobSummary(fmt.Sprintf("### 🏷️ Tag `%s` Created", tag))
 	} else if shouldIncrementTag() {
 		nextMajorVersion := nextMajorVersionForTag(tag)
 		nextTag := fmt.Sprintf("v%v", nextMajorVersion)
-		common.AddTag(nextTag)
+		if err := common.AddTag(nextTag); err != nil {
+			panic(err)
+		}
 		common.WriteJobSummary(fmt.Sprintf("### 🏷️ Tag `%s` Created", nextTag))
 	} else {
-		common.MoveTag(tag)
+		if err := common.MoveTag(tag); err != nil {
+			panic(err)
+		}
 		common.WriteJobSummary(fmt.Sprintf("### 🏷️ Tag `%s` Updated", tag))
 	}
 

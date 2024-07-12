@@ -1,11 +1,9 @@
 package common
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -18,9 +16,8 @@ import (
 
 func runCommand(name string, args ...string) error {
 	command := exec.Command(name, args...)
-	var stderr bytes.Buffer
 	command.Stdout = os.Stdout
-	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
+	command.Stderr = os.Stderr
 
 	log.Printf("> %s %s", name, sanitize(strings.Join(args, " ")))
 
