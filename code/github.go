@@ -211,8 +211,8 @@ func GetFilesChangedInLastCommit(dir string) ([]string, error) {
 	return GetFilesChangedSince("HEAD^", dir)
 }
 
-func IsWorkingTreeClean(dir string) (bool, error) {
-	out, err := runCommand("git", "status", "--porcelain", dir)
+func IsWorkingTreeClean() (bool, error) {
+	out, err := runCommand("git", "status", "--porcelain")
 	if err != nil {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
@@ -303,7 +303,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 		return false, fmt.Errorf("could not add workflows: %v", err)
 	}
 
-	if clean, err := IsWorkingTreeClean("**"); err != nil {
+	if clean, err := IsWorkingTreeClean(); err != nil {
 		return false, err
 	} else if clean {
 		log.Println("No changes to commit, we are up to date!")
