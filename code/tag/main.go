@@ -40,12 +40,8 @@ func getSyncedWorkflowsChangedSince(sinceTag string) []string {
 	return syncedWorkflowsChanged
 }
 
-func getSyncedWorkflowsChangedInCurrentCommit() []string {
-	return getSyncedWorkflowsChangedSince("HEAD^")
-}
-
 func shouldIncrementTag() bool {
-	return len(getSyncedWorkflowsChangedInCurrentCommit()) > 0
+	return reasonToSyncWorkflows() != ""
 }
 
 func reasonToSyncWorkflows() string {
