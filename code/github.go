@@ -111,18 +111,27 @@ func GetCurrentWorkflowRun() (*gogithub.WorkflowRun, error) {
 	return workflowRun, nil
 }
 
+func SetOrigin(repo string) error {
+	repoUrl := fmt.Sprintf("https://workflow-sync-bot:%s@github.com/%s.git", getClientToken(), repo)
+	if _, err := runCommand("git", "remote", "set-url", "origin", repoUrl); err != nil {
+		return fmt.Errorf("could not set url to git repository '%s': %v", repo, err)
+	}
+
+	return nil
+}
+
 func CloneRepository(repo string, dir string) error {
 	if PathExists(dir) {
 		DeleteDirectory(dir)
 	}
 
-	repoUrl := fmt.Sprintf("https://workflow-sync-prototype:%s@github.com/%s.git", getClientToken(), repo)
+	repoUrl := fmt.Sprintf("https://workflow-sync-bot:%s@github.com/%s.git", getClientToken(), repo)
 	if _, err := runCommand("git", "clone", repoUrl, dir); err != nil {
 		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
 	}
 
-	if _, err := runCommand("git", "remote", "set-url", "origin", repoUrl); err != nil {
-		return fmt.Errorf("could not clone git repository '%s' to '%s': %v", repo, dir, err)
+	if err := SetOrigin(repo); err != nil {
+		return err
 	}
 
 	return nil

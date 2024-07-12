@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -133,7 +134,31 @@ func syncWorkflows(repos []string) []SyncedRepository {
 	return syncedRepos
 }
 
+func updateLastSynced(dir string) {
+	err := common.ExecInDir(dir, func() error {
+		common.SetupGitHubUser()
+		if err := common.SetOrigin("workflow-sync-poc/common"); err != nil {
+			return err
+		}
+
+		if err := common.AddOrMoveTag("last-synced"); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
 	targetRepos := getTargetRepos()
 	syncedRepos := syncWorkflows(targetRepos)
 
@@ -141,9 +166,6 @@ func main() {
 	if AnySyncedRepoHasError(syncedRepos) {
 		panic(errors.New("one or more repositories were not synced successfully"))
 	} else {
-		common.SetupGitHubUser()
-		if err := common.AddOrMoveTag("last-synced"); err != nil {
-			panic(err)
-		}
+		updateLastSynced(workingDirectory)
 	}
 }
