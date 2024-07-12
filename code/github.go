@@ -193,6 +193,10 @@ func GetFilesChangedSince(tag string, dir string) ([]string, error) {
 		return nil, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
 
+	if out == "" {
+		return []string{}, nil
+	}
+
 	return strings.Split(out, "\n"), nil
 }
 
