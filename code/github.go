@@ -288,6 +288,10 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 		return false, fmt.Errorf("could not delete old '%s' branch: %w", branch, err)
 	}
 
+	if _, err := runCommand("git", "checkout", "-b", branch); err != nil {
+		return false, fmt.Errorf("could not create branch '%s': %v", branch, err)
+	}
+
 	if _, err := runCommand("git", "add", ".github/workflows"); err != nil {
 		return false, fmt.Errorf("could not add workflows: %v", err)
 	}
