@@ -16,6 +16,7 @@ jobs:
           fetch-depth: 0
 
   tag:
+    needs: [ deep-clone ]
     permissions:
       contents: write
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
