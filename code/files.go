@@ -127,8 +127,8 @@ func ModifySpecificFiles(dir string, shouldModify func(os.FileInfo) bool, modify
 	})
 }
 
-func WriteOutput(key string, value string) {
-	keyValuePair := fmt.Sprintf("%s=%s\n", key, value)
+func WriteOutput(output string) {
+	keyValuePair := fmt.Sprintf("go-output=%s", output)
 	if err := WriteFile(getEnv("GITHUB_OUTPUT"), keyValuePair); err != nil {
 		log.Fatalf("could not write '%s' to GITHUB_OUTPUT: %v", keyValuePair, err)
 	}

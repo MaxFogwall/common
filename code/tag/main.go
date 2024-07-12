@@ -95,5 +95,5 @@ func main() {
 		common.WriteJobSummary(fmt.Sprintf("### 🏷️ Tag `%s` Updated", tag))
 	}
 
-	common.WriteOutput("should-sync-workflows", fmt.Sprintf("%v", shouldSyncWorkflows()))
+	common.WriteOutput(fmt.Sprintf("%v", shouldSyncWorkflows()))
 }
