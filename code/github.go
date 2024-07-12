@@ -306,7 +306,8 @@ func GetLatestTag() (string, error) {
 		return "", fmt.Errorf("could not get latest tag: %v", err)
 	}
 
-	return string(output), nil
+	latestTag := strings.TrimSuffix(string(output), "\n")
+	return latestTag, nil
 }
 
 func AddTag(tag string) error {
