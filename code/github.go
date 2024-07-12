@@ -1,11 +1,9 @@
 package common
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -302,22 +300,10 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
-	err := CheckoutExistingBranch("main")
-	if err != nil {
-		return "", fmt.Errorf("could not checkout default branch: %v", err)
-	}
-
-	command := getCommand("git", "describe", "--tags", "--abbrev=0")
-	var stderr bytes.Buffer
-	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
-
+	command := getCommand("bash", "-c", "git ls-remote --tags origin | grep -o 'refs/tags/.*' | sed 's#refs/tags/##' | sort -V | tail -n1")
 	output, err := command.Output()
 	if err != nil {
-		if strings.Contains(stderr.String(), "fatal: No names found, cannot describe anything.") {
-			return "", nil
-		}
-
-		return "", fmt.Errorf("could not get latest tag (%s): %v", stderr.String(), err)
+		return "", fmt.Errorf("could not get latest tag: %v", err)
 	}
 
 	return string(output), nil
