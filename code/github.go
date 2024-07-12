@@ -270,15 +270,11 @@ func GetCurrentRepository() (string, error) {
 		return "", fmt.Errorf("could not get current repository, it returned \"\"")
 	}
 
-	log.Printf("`repoUrl`: %s", repoUrl)
-
 	// E.g. "https://github.com/workflow-sync-poc/common.git" -> "workflow-sync-poc/common"
 	repoFromUrlPattern := regexp.MustCompile(`https:\/\/github\.com\/(?P<Repo>[^\.\n]+)`)
 	repoFromUrlSubmatches := repoFromUrlPattern.FindStringSubmatch(repoUrl)
 	repoFromUrlSubmatchIndex := repoFromUrlPattern.SubexpIndex("Repo")
 	repo := string(repoFromUrlSubmatches[repoFromUrlSubmatchIndex])
-
-	log.Printf("`repo`: %s", repo)
 
 	return repo, nil
 }
@@ -414,7 +410,7 @@ func AddOrMoveTag(tag string) error {
 	return nil
 }
 
-func locallySync(sourceRepo string, targetRepo string, targetRepoDir string) error {
+func locallySync(targetRepo string, targetRepoDir string, versionTag string) error {
 	if err := CloneRepository(targetRepo, targetRepoDir); err != nil {
 		return err
 	}
@@ -422,14 +418,6 @@ func locallySync(sourceRepo string, targetRepo string, targetRepoDir string) err
 	syncedFilePattern := regexp.MustCompile(`synced_.+\.y(a)?ml`)
 	isSyncedFile := func(info os.FileInfo) bool {
 		return syncedFilePattern.MatchString(info.Name())
-	}
-
-	versionTag, err := GetLatestVersionTag(sourceRepo)
-	if err != nil {
-		return err
-	}
-	if versionTag == "" {
-		return fmt.Errorf("could not get latest version tag, it returned \"\"")
 	}
 
 	replaceRef := func(contents string) string {
@@ -532,10 +520,10 @@ func MergePullRequest(owner string, name string, pullRequest *gogithub.PullReque
 	return nil
 }
 
-func SyncRepository(sourceRepo string, targetRepo string) (*gogithub.PullRequest, error) {
+func SyncRepository(targetRepo string, versionTag string) (*gogithub.PullRequest, error) {
 	targetOwner, targetName := RepoOwnerName(targetRepo)
 	targetRepoDir := targetName
-	if err := locallySync(sourceRepo, targetRepo, targetRepoDir); err != nil {
+	if err := locallySync(targetRepo, targetRepoDir, versionTag); err != nil {
 		return nil, fmt.Errorf("could not sync locally: %w", err)
 	}
 

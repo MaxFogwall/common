@@ -77,7 +77,7 @@ func formatTime(syncedRepo SyncedRepository) string {
 	return syncedRepo.ElapsedTime.Round(time.Second).String()
 }
 
-func WriteSyncedReposSummary(syncedRepos []SyncedRepository) {
+func GetSyncedReposTableAndErrors(syncedRepos []SyncedRepository) string {
 	var syncedReposTable []string
 	var syncedReposErrors []string
 
@@ -92,13 +92,13 @@ func WriteSyncedReposSummary(syncedRepos []SyncedRepository) {
 		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s | %s |", formatRepo(syncedRepo), formatSuccess(syncedRepo), formatPullRequest(syncedRepo), formatTime(syncedRepo)))
 	}
 
-	var summaryLines []string
-	summaryLines = append(summaryLines, strings.Join(syncedReposTable, "\r\n"))
+	var tableAndErrorsLines []string
+	tableAndErrorsLines = append(tableAndErrorsLines, strings.Join(syncedReposTable, "\r\n"))
 	if len(syncedReposErrors) > 0 {
-		summaryLines = append(summaryLines, strings.Join(syncedReposErrors, "\r\n"))
+		tableAndErrorsLines = append(tableAndErrorsLines, strings.Join(syncedReposErrors, "\r\n"))
 	}
 
-	common.WriteJobSummary(strings.Join(summaryLines, "\r\n"))
+	return strings.Join(tableAndErrorsLines, "\r\n")
 }
 
 func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
@@ -109,29 +109,6 @@ func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
 	}
 
 	return false
-}
-
-func syncWorkflows(sourceRepo string, targetRepos []string) []SyncedRepository {
-	startTime := time.Now()
-	syncedRepos := []SyncedRepository{}
-
-	for _, targetRepo := range targetRepos {
-		pullRequest, err := common.SyncRepository(sourceRepo, targetRepo)
-		if err != nil {
-			log.Printf("Failed to sync to '%s': %v\n", targetRepo, err)
-		}
-
-		syncedRepository := SyncedRepository{
-			Identifier:  targetRepo,
-			Error:       err,
-			ElapsedTime: time.Since(startTime),
-			PullRequest: pullRequest,
-		}
-
-		syncedRepos = append(syncedRepos, syncedRepository)
-	}
-
-	return syncedRepos
 }
 
 func updateLastSynced(dir string) {
@@ -164,13 +141,50 @@ func main() {
 		panic(err)
 	}
 
-	targetRepos := getTargetRepos()
-	syncedRepos := syncWorkflows(sourceRepo, targetRepos)
+	versionTag, err := common.GetLatestVersionTag(sourceRepo)
+	if err != nil {
+		panic(err)
+	}
+	if versionTag == "" {
+		panic(fmt.Errorf("could not get latest version tag, it returned \"\""))
+	}
 
-	WriteSyncedReposSummary(syncedRepos)
-	if AnySyncedRepoHasError(syncedRepos) {
-		panic(errors.New("one or more repositories were not synced successfully"))
-	} else {
+	startTime := time.Now()
+	syncedRepos := []SyncedRepository{}
+	targetRepos := getTargetRepos()
+
+	for _, targetRepo := range targetRepos {
+		pullRequest, err := common.SyncRepository(targetRepo, versionTag)
+		if err != nil {
+			log.Printf("Failed to sync to '%s': %v\n", targetRepo, err)
+		}
+
+		syncedRepository := SyncedRepository{
+			Identifier:  targetRepo,
+			Error:       err,
+			ElapsedTime: time.Since(startTime),
+			PullRequest: pullRequest,
+		}
+
+		syncedRepos = append(syncedRepos, syncedRepository)
+	}
+
+	tableAndErrors := GetSyncedReposTableAndErrors(syncedRepos)
+
+	var summaryLines []string
+	success := !AnySyncedRepoHasError(syncedRepos)
+
+	if success {
 		updateLastSynced(workingDirectory)
+		summaryLines = append(summaryLines, fmt.Sprintf("### ⚡️ Workflows Synced To `@%s`", versionTag))
+	} else {
+		summaryLines = append(summaryLines, "### 💥 Workflow Sync Failed")
+	}
+
+	summaryLines = append(summaryLines, tableAndErrors)
+	common.WriteJobSummary(strings.Join(summaryLines, "\r\n"))
+
+	if !success {
+		panic(errors.New("one or more repositories were not synced successfully"))
 	}
 }
