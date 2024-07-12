@@ -26,7 +26,6 @@ on:
 
 jobs:
   run-go-file:
-    permissions:
     outputs:
       go-output: ${{ steps.set-output.outputs.go-output }}
     runs-on: ubuntu-latest
