@@ -401,6 +401,9 @@ func locallySync(targetRepo string, targetRepoDir string) error {
 	if err != nil {
 		return err
 	}
+	if versionTag == "" {
+		return fmt.Errorf("could not get latest version tag, it returned \"\"")
+	}
 
 	replaceRef := func(contents string) string {
 		return strings.ReplaceAll(contents, "@main", "@"+versionTag)
