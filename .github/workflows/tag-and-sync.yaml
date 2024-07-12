@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-tag:
+  tag:
     permissions:
       contents: write
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
-      go-file-path: 'code/version/main.go'
+      go-file-path: 'code/tag/main.go'
     secrets: inherit
 
   sync-workflows:
-    needs: [ version ]
+    needs: [ tag ]
     if: needs.version.outputs.should-sync-workflows
     permissions:
       contents: write
