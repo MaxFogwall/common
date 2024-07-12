@@ -344,7 +344,7 @@ func MoveTag(tag string) error {
 }
 
 func TagExists(tag string) (bool, error) {
-	out, err := runCommand("bash", "-c", `git ls-remote --tags origin | grep -q "refs/tags/last-synced"`)
+	out, err := runCommand("bash", "-c", fmt.Sprintf("git ls-remote --tags origin | grep -q \"refs/tags/%s\"", tag))
 	if err != nil {
 		return false, fmt.Errorf("could not check whether tag '%s' exists: %v", tag, err)
 	}
