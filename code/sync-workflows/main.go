@@ -111,6 +111,16 @@ func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
 	return false
 }
 
+func AnySyncedRepoSucceeded(syncedRepos []SyncedRepository) bool {
+	for _, syncedRepo := range syncedRepos {
+		if syncedRepo.Error == nil {
+			return true
+		}
+	}
+
+	return false
+}
+
 func updateLastSynced(dir string) {
 	err := common.ExecInDir(dir, func() error {
 		common.SetupGitHubUser()
@@ -176,9 +186,14 @@ func main() {
 
 	if success {
 		updateLastSynced(workingDirectory)
-		summaryLines = append(summaryLines, fmt.Sprintf("### 🔗 Workflows Now Use `%s`", versionTag))
+		summaryLines = append(summaryLines, fmt.Sprintf("### 🟢 All Repos Now Use `%s` For Workflows", versionTag))
 	} else {
-		summaryLines = append(summaryLines, "### 🔗 Workflow Sync Failed")
+		partialSuccess := AnySyncedRepoSucceeded(syncedRepos)
+		if partialSuccess {
+			summaryLines = append(summaryLines, fmt.Sprintf("### 🟡 Some Repos Now Use `%s` For Workflows", versionTag))
+		} else {
+			summaryLines = append(summaryLines, "### 🔴 No Workflows Changed")
+		}
 	}
 
 	summaryLines = append(summaryLines, tableAndErrors)
