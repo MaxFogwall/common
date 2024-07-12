@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -300,13 +302,39 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
-	command := getCommand("git", "ls-remote", "--tags", "origin", "|", "grep", "-o", "'refs/tags/.*'", "|", "sed", "'s#refs/tags/##'", "|", "sort", "-V", "|", "tail", "-n1")
-	output, err := command.Output()
+	command := getCommand("git", "ls-remote", "--tags", "origin")
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+
+	err := command.Run()
 	if err != nil {
-		return "", fmt.Errorf("could not get latest tag: %v", err)
+		return "", fmt.Errorf("could not run command: %s", stderr.String())
 	}
 
-	return string(output), nil
+	tags := []string{}
+	lines := strings.Split(stdout.String(), "\n")
+	tagRegex := regexp.MustCompile(`refs/tags/(.+)$`)
+	for _, line := range lines {
+		match := tagRegex.FindStringSubmatch(line)
+		if match != nil {
+			tags = append(tags, match[1])
+		}
+	}
+
+	if len(tags) == 0 {
+		return "", nil
+	}
+
+	sort.Slice(tags, func(i, j int) bool {
+		// Assumes a "v31" format, i.e. cannot handle something like "v3.7.2".
+		version1, _ := strconv.Atoi(tags[i][1:])
+		version2, _ := strconv.Atoi(tags[j][1:])
+		return version1 < version2
+	})
+	latestTag := tags[len(tags)-1]
+
+	return latestTag, nil
 }
 
 func AddTag(tag string) error {
