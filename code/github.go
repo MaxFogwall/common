@@ -125,20 +125,6 @@ func CloneRepository(repo string, dir string) error {
 	return nil
 }
 
-func GetCurrentRepository() (string, error) {
-	repoUrl, err := runAndOutputCommand("git", "config", "--get", "remote.origin.url")
-	if err != nil {
-		return "", fmt.Errorf("could not get current repository: %v", err)
-	}
-
-	// E.g. "https://github.com/workflow-sync-poc/common.git" -> "workflow-sync-poc/common"
-	repoFromUrlPattern := regexp.MustCompile(`https://github.com/(.+?)\.git`)
-	repoFromUrlMatch := repoFromUrlPattern.Find(repoUrl)
-	repo := string(repoFromUrlMatch)
-
-	return repo, nil
-}
-
 func GetDefaultBranch(owner string, name string) (string, error) {
 	ctx := context.Background()
 	client := getClient()
