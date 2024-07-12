@@ -25,6 +25,7 @@ func runCommand(name string, args ...string) error {
 
 func getCommand(name string, args ...string) *exec.Cmd {
 	command := exec.Command(name, args...)
+	command.Stderr = os.Stderr
 	log.Printf("> %s %s", name, strings.Join(args, " "))
 	return command
 }
@@ -309,7 +310,7 @@ func GetLatestTag() (string, error) {
 			return "", nil
 		}
 
-		return "", fmt.Errorf("could not get latest tag (%s): %v", string(output), err)
+		return "", fmt.Errorf("could not get latest tag (%s): %v", stderr.String(), err)
 	}
 
 	return string(output), nil
