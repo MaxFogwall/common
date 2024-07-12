@@ -176,9 +176,9 @@ func main() {
 
 	if success {
 		updateLastSynced(workingDirectory)
-		summaryLines = append(summaryLines, fmt.Sprintf("### ⚡️ Workflows Synced To `@%s`", versionTag))
+		summaryLines = append(summaryLines, fmt.Sprintf("### ✔️ Workflows Synced to `%s`", versionTag))
 	} else {
-		summaryLines = append(summaryLines, "### 💥 Workflow Sync Failed")
+		summaryLines = append(summaryLines, "### ❌ Workflow Sync Failed")
 	}
 
 	summaryLines = append(summaryLines, tableAndErrors)
