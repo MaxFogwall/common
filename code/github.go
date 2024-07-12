@@ -197,7 +197,14 @@ func GetFilesChangedSince(tag string, dir string) ([]string, error) {
 		return []string{}, nil
 	}
 
-	return strings.Split(out, "\n"), nil
+	var filesChanged []string
+	for _, fileChanged := range strings.Split(out, "\n") {
+		if len(fileChanged) > 0 {
+			filesChanged = append(filesChanged, fileChanged)
+		}
+	}
+
+	return filesChanged, nil
 }
 
 func GetFilesChangedInLastCommit(dir string) ([]string, error) {
