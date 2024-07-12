@@ -56,11 +56,4 @@ jobs:
         run: |
           cd repository  # Necessary so that the go.mod file can be found.
           go run ${{ inputs.go-file-path }} ${{ inputs.go-args }}
-      
-      - name: Set Output
-        id: set-output
-        run: |
-          if [ -r go-output.txt ]; then
-            echo "go-output=$(cat go-output.txt)" >> $GITHUB_OUTPUT
-            echo "$(cat go-output.txt)"
-          fi
+          cat $GITHUB_OUTPUT

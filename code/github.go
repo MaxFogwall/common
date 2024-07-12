@@ -42,7 +42,7 @@ func SetupGitHubUser(username string, email string) {
 	runCommand("git", "config", "user.email", email)
 }
 
-func UpdateJobSummary(contents string) {
+func WriteJobSummary(contents string) {
 	WriteFile(getEnv("GITHUB_STEP_SUMMARY"), contents)
 }
 
@@ -125,7 +125,21 @@ func CloneRepository(repo string, dir string) error {
 	return nil
 }
 
-func getDefaultBranch(owner string, name string) (string, error) {
+func GetCurrentRepository() (string, error) {
+	repoUrl, err := runAndOutputCommand("git", "config", "--get", "remote.origin.url")
+	if err != nil {
+		return "", fmt.Errorf("could not get current repository: %v", err)
+	}
+
+	// E.g. "https://github.com/workflow-sync-poc/common.git" -> "workflow-sync-poc/common"
+	repoFromUrlPattern := regexp.MustCompile(`https://github.com/(.+?)\.git`)
+	repoFromUrlMatch := repoFromUrlPattern.Find(repoUrl)
+	repo := string(repoFromUrlMatch)
+
+	return repo, nil
+}
+
+func GetDefaultBranch(owner string, name string) (string, error) {
 	ctx := context.Background()
 	client := getClient()
 
@@ -175,8 +189,17 @@ func RemoteBranchExists(owner string, name string, branch string) (bool, error) 
 	return branchInfo != nil, nil
 }
 
-func IsWorkingTreeClean() (bool, error) {
-	out, err := runAndOutputCommand("git", "status", "--porcelain")
+func IsLastCommitClean(dir string) (bool, error) {
+	out, err := runAndOutputCommand("git", "show", "--name-only", "--pretty=format:", "--", ".github/workflows/synced_*")
+	if err != nil {
+		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
+	}
+
+	return string(out) == "", nil
+}
+
+func IsWorkingTreeClean(dir string) (bool, error) {
+	out, err := runAndOutputCommand("git", "status", "--porcelain", "\""+dir+"\"")
 	if err != nil {
 		return false, fmt.Errorf("could not check if working tree was clean: %v", err)
 	}
@@ -229,7 +252,7 @@ func CheckoutExistingBranch(branch string) error {
 }
 
 func DeleteBranch(owner string, name string, branch string) error {
-	defaultBranch, err := getDefaultBranch(owner, name)
+	defaultBranch, err := GetDefaultBranch(owner, name)
 	if err != nil {
 		return err
 	}
@@ -270,7 +293,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 		return false, fmt.Errorf("could not add workflows: %v", err)
 	}
 
-	if clean, err := IsWorkingTreeClean(); err != nil {
+	if clean, err := IsWorkingTreeClean("."); err != nil {
 		return false, err
 	} else if clean {
 		log.Println("No changes to commit, we are up to date!")
@@ -286,6 +309,44 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 	}
 
 	return true, nil
+}
+
+func GetLatestTag() (string, error) {
+	output, err := runAndOutputCommand("git describe --tags --abbrev=0")
+	if err != nil {
+		if string(output) == "fatal: No names found, cannot describe anything." {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("could not get latest tag: %v", err)
+	}
+
+	return string(output), nil
+}
+
+func AddTag(tag string) error {
+	if err := runCommand("git", "tag", tag); err != nil {
+		return fmt.Errorf("could not update local tag '%s': %v", tag, err)
+	}
+
+	if err := runCommand("git", "push", "origin", tag); err != nil {
+		return fmt.Errorf("could not push remote tag '%s': %v", tag, err)
+	}
+
+	return nil
+}
+
+func MoveTag(tag string) error {
+	// See recommendation from https://github.com/actions/toolkit/blob/master/docs/action-versioning.md
+	if err := runCommand("git", "tag", "-fa", tag, "-m", fmt.Sprintf("Update tag `%s` to latest commit", tag)); err != nil {
+		return fmt.Errorf("could not update local tag '%s': %v", tag, err)
+	}
+
+	if err := runCommand("git", "push", "origin", tag, "--force"); err != nil {
+		return fmt.Errorf("could not push remote tag '%s': %v", tag, err)
+	}
+
+	return nil
 }
 
 func locallySync(targetRepo string, targetRepoDir string, sourceRef string) error {
@@ -337,7 +398,7 @@ func CreatePullRequest(owner string, name string, branch string, title string, w
 
 	log.Println("- Creating pull request...")
 
-	defaultBranch, err := getDefaultBranch(owner, name)
+	defaultBranch, err := GetDefaultBranch(owner, name)
 	if err != nil {
 		return nil, err
 	}
