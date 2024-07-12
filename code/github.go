@@ -306,7 +306,7 @@ func GetLatestTag() (string, error) {
 	command.Stderr = &stderr
 	output, err := command.Output()
 	if err != nil {
-		if stderr.String() == "fatal: No names found, cannot describe anything." {
+		if strings.Contains(stderr.String(), "fatal: No names found, cannot describe anything.") {
 			return "", nil
 		}
 
