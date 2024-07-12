@@ -23,13 +23,8 @@ func runCommand(name string, args ...string) error {
 	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
 
 	log.Printf("> %s %s", name, sanitize(strings.Join(args, " ")))
-	err := command.Run()
 
-	if strings.Contains(stderr.String(), "fatal:") {
-		return fmt.Errorf("could not run command: %s", stderr.String())
-	}
-
-	return err
+	return command.Run()
 }
 
 func getCommand(name string, args ...string) *exec.Cmd {
