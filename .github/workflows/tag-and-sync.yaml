@@ -17,7 +17,7 @@ jobs:
 
   sync-workflows:
     needs: [ tag ]
-    if: needs.version.outputs.should-sync-workflows
+    if: always() && needs.version.outputs.should-sync-workflows
     permissions:
       contents: write
       pull-requests: write
