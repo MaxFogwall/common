@@ -312,7 +312,7 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 }
 
 func GetLatestTag() (string, error) {
-	output, err := runAndOutputCommand("git describe --tags --abbrev=0")
+	output, err := runAndOutputCommand("git", "describe", "--tags", "--abbrev=0")
 	if err != nil {
 		if string(output) == "fatal: No names found, cannot describe anything." {
 			return "", nil
