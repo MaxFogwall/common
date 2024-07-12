@@ -364,7 +364,7 @@ func AddOrMoveTag(tag string) error {
 		return fmt.Errorf("could not add or move tag '%s': %v", tag, err)
 	}
 
-	if tagExists {
+	if !tagExists {
 		err = AddTag(tag)
 	} else {
 		err = MoveTag(tag)
