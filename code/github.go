@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -303,7 +304,8 @@ func CreateAndPushToNewBranch(owner string, name string, branch string) (bool, e
 func GetLatestTag() (string, error) {
 	command := getCommand("git", "describe", "--tags", "--abbrev=0")
 	var stderr bytes.Buffer
-	command.Stderr = &stderr
+	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
+
 	output, err := command.Output()
 	if err != nil {
 		if strings.Contains(stderr.String(), "fatal: No names found, cannot describe anything.") {
