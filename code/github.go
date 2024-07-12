@@ -206,14 +206,12 @@ func IsWorkingTreeClean(dir string) (bool, error) {
 }
 
 func LocalBranchExists(branch string) (bool, error) {
-	if _, err := runCommand("git", "rev-parse", "--verify", branch); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return exitErr.Success(), nil
-		}
+	out, err := runCommand("git", "branch", "--list", branch)
+	if err != nil {
 		return false, fmt.Errorf("could not check if branch '%s' exists locally: %v", branch, err)
 	}
 
-	return true, nil
+	return string(out) != "", nil
 }
 
 func DeleteLocalBranch(branch string) error {
