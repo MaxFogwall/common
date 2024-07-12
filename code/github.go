@@ -347,8 +347,7 @@ func MoveTag(tag string) error {
 }
 
 func TagExists(tag string) (bool, error) {
-	out, err := runCommand("bash", "-c", fmt.Sprintf("git ls-remote --tags origin | grep -q \"refs/tags/%s\"", tag))
-	if err != nil {
+	if _, err := runCommand("bash", "-c", fmt.Sprintf("git ls-remote --tags origin | grep -q \"refs/tags/%s\"", tag)); err != nil {
 		// `grep` returns an exit code of 1 if no match is found.
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 			return false, nil
@@ -356,7 +355,7 @@ func TagExists(tag string) (bool, error) {
 		return false, fmt.Errorf("could not check whether tag '%s' exists: %v", tag, err)
 	}
 
-	return out != "", nil
+	return true, nil
 }
 
 func AddOrMoveTag(tag string) error {
