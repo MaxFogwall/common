@@ -7,16 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deep-clone:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
   tag:
-    needs: [ deep-clone ]
     permissions:
       contents: write
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
