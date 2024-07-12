@@ -36,7 +36,7 @@ func isSyncedReposListChanged() bool {
 		panic(err)
 	}
 
-	return isSyncedReposListSame
+	return !isSyncedReposListSame
 }
 
 func shouldIncrementTag() bool {
