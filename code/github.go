@@ -273,7 +273,7 @@ func GetCurrentRepository() (string, error) {
 	log.Printf("`repoUrl`: %s", repoUrl)
 
 	// E.g. "https://github.com/workflow-sync-poc/common.git" -> "workflow-sync-poc/common"
-	repoFromUrlPattern := regexp.MustCompile(`https://github.com/(.+?)\.git`)
+	repoFromUrlPattern := regexp.MustCompile(`https:\/\/github\.com\/(.+?)\.git`)
 	repoFromUrlMatch := repoFromUrlPattern.FindString(repoUrl)
 	repo := string(repoFromUrlMatch)
 
