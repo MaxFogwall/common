@@ -27,7 +27,7 @@ on:
 jobs:
   run-go-file:
     outputs:
-      go-output: ${{ steps.set-output.outputs.go-output }}
+      go-output: ${{ steps.run-file.outputs.go-output }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository ("${{ inputs.go-file-repo }}")
@@ -46,6 +46,7 @@ jobs:
           cache-dependency-path: '**/go.sum'
 
       - name: Run Go File ("${{ inputs.go-file-path }}")
+        id: run-file
         env:
           GH_WORKFLOW_RUN_ID: '${{ github.run_id }}'
           GO_FILE_REPO: '${{ inputs.go-file-repo }}'
