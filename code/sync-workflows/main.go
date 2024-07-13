@@ -111,14 +111,15 @@ func AnySyncedRepoHasError(syncedRepos []SyncedRepository) bool {
 	return false
 }
 
-func AnySyncedRepoSucceeded(syncedRepos []SyncedRepository) bool {
+func GetSyncedRepoCount(syncedRepos []SyncedRepository) (int, int) {
+	successfulRepos := 0
 	for _, syncedRepo := range syncedRepos {
 		if syncedRepo.Error == nil {
-			return true
+			successfulRepos += 1
 		}
 	}
 
-	return false
+	return successfulRepos, len(syncedRepos)
 }
 
 func updateLastSynced(dir string) {
@@ -179,27 +180,38 @@ func main() {
 		syncedRepos = append(syncedRepos, syncedRepository)
 	}
 
-	tableAndErrors := GetSyncedReposTableAndErrors(syncedRepos)
-
 	var summaryLines []string
-	success := !AnySyncedRepoHasError(syncedRepos)
+	successCount, totalCount := GetSyncedRepoCount(syncedRepos)
 
-	if success {
-		updateLastSynced(workingDirectory)
-		summaryLines = append(summaryLines, fmt.Sprintf("### 🟢 All Repos Now Use `%s` For Workflows", versionTag))
+	if successCount > 0 {
+		summaryLines = append(summaryLines, fmt.Sprintf("### 💨 Pushed `%s` Workflows to **%v/%v** Repos", versionTag, successCount, totalCount))
 	} else {
-		partialSuccess := AnySyncedRepoSucceeded(syncedRepos)
-		if partialSuccess {
-			summaryLines = append(summaryLines, fmt.Sprintf("### 🟡 Some Repos Now Use `%s` For Workflows", versionTag))
-		} else {
-			summaryLines = append(summaryLines, "### 🔴 No Workflows Changed")
-		}
+		summaryLines = append(summaryLines, "### 💨 No Workflows Pushed")
 	}
 
+	tableAndErrors := GetSyncedReposTableAndErrors(syncedRepos)
 	summaryLines = append(summaryLines, tableAndErrors)
+
+	lastSyncedTag := "last-synced"
+	if successCount == totalCount {
+		updateLastSynced(workingDirectory)
+		summaryLines = append(summaryLines, fmt.Sprintf("### Tag `%s` Updated", lastSyncedTag))
+	} else {
+		missingCount := totalCount - successCount
+		repoPostfix := "s"
+		needPostfix := ""
+		if missingCount == 1 {
+			repoPostfix = ""
+			needPostfix = "s"
+		}
+
+		summaryLines = append(summaryLines, fmt.Sprintf("### Tag `%s` Stays", lastSyncedTag))
+		summaryLines = append(summaryLines, fmt.Sprintf("*The next run will attempt to sync again, because **%v** repo%s still need%s workflows synced.*", missingCount, repoPostfix, needPostfix))
+	}
+
 	common.WriteJobSummary(strings.Join(summaryLines, "\r\n"))
 
-	if !success {
+	if successCount < totalCount {
 		panic(errors.New("one or more repositories were not synced successfully"))
 	}
 }
