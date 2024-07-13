@@ -90,9 +90,7 @@ func GetSyncedReposTableAndErrors(syncedRepos []SyncedRepository) string {
 
 		if syncedRepo.Error != nil {
 			newlinePattern := regexp.MustCompile(`\r\n|[\r\n\v\f\x{0085}\x{2028}\x{2029}]`)
-			newlinePattern.ReplaceAllString(syncedRepo.Error.Error(), "; ")
-			errorString := strings.ReplaceAll(syncedRepo.Error.Error(), "\n\n", "; ")
-			errorString = strings.ReplaceAll(errorString, "\n", "; ")
+			errorString := newlinePattern.ReplaceAllString(syncedRepo.Error.Error(), "; ")
 
 			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", formatRepo(syncedRepo), errorString))
 		}
