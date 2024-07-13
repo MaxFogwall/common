@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -85,11 +86,16 @@ func GetSyncedReposTableAndErrors(syncedRepos []SyncedRepository) string {
 	syncedReposTable = append(syncedReposTable, "|:-|:-:|:-|-:|")
 
 	for _, syncedRepo := range syncedRepos {
-		if syncedRepo.Error != nil {
-			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", formatRepo(syncedRepo), syncedRepo.Error))
-		}
-
 		syncedReposTable = append(syncedReposTable, fmt.Sprintf("| %s | %s | %s | %s |", formatRepo(syncedRepo), formatSuccess(syncedRepo), formatPullRequest(syncedRepo), formatTime(syncedRepo)))
+
+		if syncedRepo.Error != nil {
+			newlinePattern := regexp.MustCompile(`\r\n|[\r\n\v\f\x{0085}\x{2028}\x{2029}]`)
+			newlinePattern.ReplaceAllString(syncedRepo.Error.Error(), "; ")
+			errorString := strings.ReplaceAll(syncedRepo.Error.Error(), "\n\n", "; ")
+			errorString = strings.ReplaceAll(errorString, "\n", "; ")
+
+			syncedReposErrors = append(syncedReposErrors, fmt.Sprintf("- ❌ %s (%s)", formatRepo(syncedRepo), errorString))
+		}
 	}
 
 	var tableAndErrorsLines []string
@@ -182,20 +188,15 @@ func main() {
 
 	var summaryLines []string
 	successCount, totalCount := GetSyncedRepoCount(syncedRepos)
-
-	if successCount > 0 {
-		summaryLines = append(summaryLines, fmt.Sprintf("### 💨 Pushed `%s` Workflows to **%v/%v** Repos", versionTag, successCount, totalCount))
-	} else {
-		summaryLines = append(summaryLines, "### 💨 No Workflows Pushed")
-	}
-
 	tableAndErrors := GetSyncedReposTableAndErrors(syncedRepos)
+
+	summaryLines = append(summaryLines, fmt.Sprintf("### 💨 Pushed `%s` Workflows to `%v/%v` Repos", versionTag, successCount, totalCount))
 	summaryLines = append(summaryLines, tableAndErrors)
 
 	lastSyncedTag := "last-synced"
 	if successCount == totalCount {
 		updateLastSynced(workingDirectory)
-		summaryLines = append(summaryLines, fmt.Sprintf("### Tag `%s` Updated", lastSyncedTag))
+		summaryLines = append(summaryLines, fmt.Sprintf("### 🏷️ Tag `%s` Updated", lastSyncedTag))
 	} else {
 		missingCount := totalCount - successCount
 		repoPostfix := "s"
@@ -205,7 +206,7 @@ func main() {
 			needPostfix = "s"
 		}
 
-		summaryLines = append(summaryLines, fmt.Sprintf("### Tag `%s` Stays", lastSyncedTag))
+		summaryLines = append(summaryLines, fmt.Sprintf("### 🏷️ Tag `%s` Stays", lastSyncedTag))
 		summaryLines = append(summaryLines, fmt.Sprintf("*The next run will attempt to sync again, because **%v** repo%s still need%s workflows synced.*", missingCount, repoPostfix, needPostfix))
 	}
 
