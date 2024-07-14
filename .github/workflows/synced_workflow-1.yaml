@@ -1,5 +1,4 @@
 # This file is synced from `workflow-sync-poc/common`.
-# ..
 
 name: Run `code-1.go`
 
@@ -11,3 +10,4 @@ jobs:
     uses: 'workflow-sync-poc/common/.github/workflows/run-go-file.yaml@main'
     with:
       go-file-path: 'code/code-1/main.go'
+      go-file-ref: ''

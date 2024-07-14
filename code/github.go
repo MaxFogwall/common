@@ -421,7 +421,7 @@ func locallySync(targetRepo string, targetRepoDir string, versionTag string) err
 	}
 
 	replaceRef := func(contents string) string {
-		return strings.ReplaceAll(contents, "@main", "@"+versionTag)
+		return strings.ReplaceAll(contents, "go-file-ref: ''", fmt.Sprintf("go-file-ref: '%s'", versionTag))
 	}
 
 	targetWorkflowPath := targetRepoDir + "/.github/workflows"

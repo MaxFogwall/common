@@ -19,6 +19,10 @@ on:
         type: 'string'
         default: ''
         description: 'A space-separated list of string arguments passed to the Go file (e.g. "component-1").'
+      go-file-ref:
+        type: 'string'
+        default: ''
+        description: 'The ref of the source repo to checkout when running Go files (e.g. "refs/tags/v2").'
     outputs:
       go-output:
         value: ${{ jobs.run-go-file.outputs.go-output }}
@@ -35,7 +39,7 @@ jobs:
         with:
           repository: '${{ inputs.go-file-repo }}'
           path: 'repository'
-          ref: '${{ github.workflow_ref }}'
+          ref: '${{ inputs.go-file-ref }}'
           fetch-depth: 0
 
       - name: Setup Go ("${{ inputs.go-version }}")
@@ -48,9 +52,9 @@ jobs:
       - name: Run Go File ("${{ inputs.go-file-path }}")
         id: run-file
         env:
-          GH_WORKFLOW_REF: '${{ github.workflow_ref }}'
-          GH_WORKFLOW_RUN_ID: '${{ github.run_id }}'
           GO_FILE_REPO: '${{ inputs.go-file-repo }}'
+          GO_FILE_REF: '${{ inputs.go-file-ref }}'
+          GH_WORKFLOW_RUN_ID: '${{ github.run_id }}'
           GH_PAT_MF: '${{ secrets.GH_PAT_MF }}'
           GH_PAT_AYYXD: '${{ secrets.GH_PAT_AYYXD }}'
         run: |
