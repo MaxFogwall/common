@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	common.WriteJobSummary(fmt.Sprintf("### Executed from `%s`", common.GetEnv("GH_REF")))
+	common.WriteJobSummary(fmt.Sprintf("### Executed from `%s`", common.GetEnv("GH_WORKFLOW_REF")))
 }

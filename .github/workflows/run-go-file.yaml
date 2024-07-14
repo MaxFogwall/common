@@ -35,7 +35,7 @@ jobs:
         with:
           repository: '${{ inputs.go-file-repo }}'
           path: 'repository'
-          ref: '${{ github.ref_name }}'
+          ref: '${{ github.workflow_sha }}'
           fetch-depth: 0
 
       - name: Setup Go ("${{ inputs.go-version }}")
@@ -48,7 +48,7 @@ jobs:
       - name: Run Go File ("${{ inputs.go-file-path }}")
         id: run-file
         env:
-          GH_REF: '${{ github.ref }}'
+          GH_WORKFLOW_REF: '${{ github.workflow_sha }}'
           GH_WORKFLOW_RUN_ID: '${{ github.run_id }}'
           GO_FILE_REPO: '${{ inputs.go-file-repo }}'
           GH_PAT_MF: '${{ secrets.GH_PAT_MF }}'
