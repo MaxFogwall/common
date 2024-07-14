@@ -1,13 +1,11 @@
 package main
 
 import (
-    "fmt"
+	"fmt"
+
+	common "github.com/workflow-sync-poc/common/code"
 )
 
 func main() {
-    fmt.Println(isSuccess())
-}
-
-func isSuccess() bool {
-    return true
+	common.WriteJobSummary(fmt.Sprintf("### Executed from `%s`", common.GetEnv("GH_REF")))
 }

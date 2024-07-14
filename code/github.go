@@ -45,11 +45,7 @@ func SetupGitHubUser() {
 	runCommand("git", "config", "user.email", "workflow-sync.bot@example.com")
 }
 
-func WriteJobSummary(contents string) {
-	WriteFile(getEnv("GITHUB_STEP_SUMMARY"), contents)
-}
-
-func getEnv(key string) string {
+func GetEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		log.Fatalf("no '%s' provided in ENV", key)
@@ -57,12 +53,16 @@ func getEnv(key string) string {
 	return value
 }
 
+func WriteJobSummary(contents string) {
+	WriteFile(GetEnv("GITHUB_STEP_SUMMARY"), contents)
+}
+
 func getClientToken() string {
-	return getEnv("GH_PAT_MF")
+	return GetEnv("GH_PAT_MF")
 }
 
 func getApproverClientToken() string {
-	return getEnv("GH_PAT_AYYXD")
+	return GetEnv("GH_PAT_AYYXD")
 }
 
 func sanitize(log string) string {
@@ -91,8 +91,8 @@ func GetCurrentWorkflowRun() (*gogithub.WorkflowRun, error) {
 	ctx := context.Background()
 	client := getClient()
 
-	owner, name := RepoOwnerName(getEnv("GO_FILE_REPO"))
-	workflowRunString := getEnv("GH_WORKFLOW_RUN_ID")
+	owner, name := RepoOwnerName(GetEnv("GO_FILE_REPO"))
+	workflowRunString := GetEnv("GH_WORKFLOW_RUN_ID")
 
 	runId, err := strconv.ParseInt(workflowRunString, 10, 64)
 	if err != nil {
