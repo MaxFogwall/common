@@ -40,23 +40,21 @@ func getSyncedWorkflowsChangedSince(sinceTag string) []string {
 	return syncedWorkflowsChanged
 }
 
-func shouldIncrementTag() bool {
-	return reasonToSyncWorkflows() != ""
+func shouldIncrementTag(lastTag string) bool {
+	return reasonToSyncWorkflowsSince(lastTag) != ""
 }
 
-func reasonToSyncWorkflows() string {
-	lastSyncedTag := "last-synced"
-
-	hasEverSynced, err := common.TagExists(lastSyncedTag)
+func reasonToSyncWorkflowsSince(sinceTag string) string {
+	hasEverSynced, err := common.TagExists(sinceTag)
 	if err != nil {
 		panic(err)
 	}
 
 	if !hasEverSynced {
-		return fmt.Sprintf("no `%s` tag exists yet", lastSyncedTag)
+		return fmt.Sprintf("no `%s` tag exists yet", sinceTag)
 	}
 
-	changedFiles := append(getSyncedWorkflowsChangedSince(lastSyncedTag), getSyncedReposDefinitionChangedSince(lastSyncedTag)...)
+	changedFiles := append(getSyncedWorkflowsChangedSince(sinceTag), getSyncedReposDefinitionChangedSince(sinceTag)...)
 	if len(changedFiles) == 0 {
 		return ""
 	}
@@ -66,7 +64,7 @@ func reasonToSyncWorkflows() string {
 		wereOrWas = "was"
 	}
 
-	return fmt.Sprintf("`%s` %s different since `%s`", strings.Join(changedFiles, "`, `"), wereOrWas, lastSyncedTag)
+	return fmt.Sprintf("`%s` %s different since `%s`", strings.Join(changedFiles, "`, `"), wereOrWas, sinceTag)
 }
 
 func main() {
@@ -89,7 +87,7 @@ func main() {
 			panic(err)
 		}
 		summaryLines = append(summaryLines, fmt.Sprintf("### 🏷️ Tag `%s` Created", tag))
-	} else if shouldIncrementTag() {
+	} else if shouldIncrementTag(tag) {
 		nextMajorVersion := nextMajorVersionForTag(tag)
 		nextTag := fmt.Sprintf("v%v", nextMajorVersion)
 		if err := common.AddTag(nextTag); err != nil {
@@ -103,7 +101,7 @@ func main() {
 		summaryLines = append(summaryLines, fmt.Sprintf("### 🏷️ Tag `%s` Updated", tag))
 	}
 
-	reasonToSync := reasonToSyncWorkflows()
+	reasonToSync := reasonToSyncWorkflowsSince("last-synced")
 	if reasonToSync != "" {
 		summaryLines = append(summaryLines, fmt.Sprintf("*Workflows need to be synchronized, because %s.*", reasonToSync))
 	}
