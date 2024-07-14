@@ -421,6 +421,7 @@ func locallySync(targetRepo string, targetRepoDir string, versionTag string) err
 	}
 
 	replaceRef := func(contents string) string {
+		contents = strings.ReplaceAll(contents, "@main", fmt.Sprintf("@%s", versionTag))
 		return strings.ReplaceAll(contents, "go-file-ref: ''", fmt.Sprintf("go-file-ref: '%s'", versionTag))
 	}
 
